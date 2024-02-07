@@ -11,7 +11,6 @@ from parse_config import ConfigParser
 from trainer import Trainer
 from utils import prepare_device
 from data_loader.dataset import XRayDataset
-import albumentations as A
 import pickle
 from sklearn.model_selection import GroupKFold
 
@@ -32,13 +31,15 @@ def set_seeds(seed=42):
 
 def main(config):
     # logger = config.get_logger("train")
+
+    # 필요한 파일들 load
     with open("/data/ephemeral/home/datasets/pngs.pickle", "rb") as f:
         _filenames = np.array(pickle.load(f))
     with open("/data/ephemeral/home/datasets/jsons.pickle", "rb") as f:
         _labelnames = np.array(pickle.load(f))
+    with open("/data/ephemeral/home/datasets/data.pickle", "rb") as f:
+        hash_dict = pickle.load(f)
 
-    tf = A.Compose([A.Resize(1024, 1024), A.Normalize])
-    # IMAGE_ROOT = "/data/ephemeral/home/datasets/train/DCM"
     LABEL_ROOT = "/data/ephemeral/home/datasets/train/outputs_json"
     MMAP_PATH = "/data/ephemeral/home/datasets/train_mmap"
     # setup data_loader instances
@@ -58,17 +59,17 @@ def main(config):
             mmap_path=MMAP_PATH,
             filenames=train_filenames,
             labelnames=train_labelnames,
+            hash_dict=hash_dict,
             label_root=LABEL_ROOT,
             is_train=True,
-            transforms=tf,
         )
         valid_dataset = XRayDataset(
             mmap_path=MMAP_PATH,
             filenames=valid_filenames,
+            hash_dict=hash_dict,
             labelnames=valid_labelnames,
             label_root=LABEL_ROOT,
             is_train=False,
-            transforms=tf,
         )
 
         train_data_loader = config.init_obj(

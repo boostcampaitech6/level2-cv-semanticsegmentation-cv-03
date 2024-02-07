@@ -1,12 +1,12 @@
 # python native
 import os
 import json
-import pickle
 
 # external library
 import cv2
 import numpy as np
 from mmap_ninja.ragged import RaggedMmap
+import albumentations as A
 
 # torch
 import torch
@@ -52,23 +52,18 @@ class XRayDataset(Dataset):
         mmap_path,
         filenames,
         labelnames,
+        hash_dict,
         label_root,
         is_train=True,
-        transforms=None,
     ):
-        with open("/data/ephemeral/home/datasets/pngs.pickle", "rb") as f:
-            _filenames = np.array(pickle.load(f))
-        with open("/data/ephemeral/home/datasets/jsons.pickle", "rb") as f:
-            _labelnames = np.array(pickle.load(f))
 
         self.label_root = label_root
         self.mmap = RaggedMmap(mmap_path)
-        with open("/data/ephemeral/home/datasets/data.pickle", "rb") as f:
-            self.hash_dict = pickle.load(f)
+        self.hash_dict = hash_dict
         self.filenames = filenames
         self.labelnames = labelnames
         self.is_train = is_train
-        self.transforms = transforms
+        self.transforms = A.Compose([A.Resize(1024, 1024), A.Normalize])
 
     def __len__(self):
         return len(self.filenames)
