@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from base import BaseModel
+from torchvision import models
 
 
 class MnistModel(BaseModel):
@@ -20,3 +21,17 @@ class MnistModel(BaseModel):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
+
+
+class FCN_ResNet50(BaseModel):
+    def __init__(self, num_classes=29):
+        super().__init__()
+        self.pretrained_model = models.segmentation.fcn_resnet50(
+            pretrained=True
+        )
+
+        # output num_classes
+        self.pretrained_model[4] = nn.Conv2d(512, num_classes, kernel_size=1)
+
+    def forward(self, x):
+        return self.pretrained_model(x)
