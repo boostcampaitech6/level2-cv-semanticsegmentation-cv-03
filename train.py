@@ -4,13 +4,15 @@ import os
 import random
 import torch
 import numpy as np
-import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
 from utils import prepare_device
+from data_loader.dataset import XRayDataset
+import albumentations as A
+
 
 SEED = 42
 
@@ -29,10 +31,33 @@ def set_seeds(seed=42):
 def main(config):
     logger = config.get_logger("train")
 
+    tf = A.Compose([A.Resize(1024, 1024), A.Normalize])
+    IMAGE_ROOT = "/data/ephemeral/home/datasets/train/DCM"
+    LABEL_ROOT = "/data/ephemeral/home/datasets/train/outputs_json"
+    MMAP_PATH = "/data/ephemeral/home/datasets/train_mmap"
     # setup data_loader instances
-    data_loader = config.init_obj("data_loader", module_data)
-    valid_data_loader = data_loader.split_validation()
 
+    train_dataset = XRayDataset(
+        mmap_path=MMAP_PATH,
+        image_root=IMAGE_ROOT,
+        label_root=LABEL_ROOT,
+        is_train=True,
+        transforms=tf,
+    )
+    valid_dataset = XRayDataset(
+        mmap_path=MMAP_PATH,
+        image_root=IMAGE_ROOT,
+        label_root=LABEL_ROOT,
+        is_train=False,
+        transforms=tf,
+    )
+
+    data_loader = config.init_obj(
+        "train_data_loader", torch.utils.data, train_dataset
+    )
+    valid_data_loader = config.init_obj(
+        "valid_data_loader", torch.utils.data, valid_dataset
+    )
     # build model architecture, then print to console
     model = config.init_obj("arch", module_arch)
     logger.info(model)

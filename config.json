@@ -6,16 +6,29 @@
         "type": "MnistModel",
         "args": {}
     },
-    "data_loader": {
-        "type": "MnistDataLoader",
+    "train_data_loader": {
+        "type": "DataLoader",
         "args":{
-            "data_dir": "data/",
-            "batch_size": 128,
+            "batch_size": 8,
             "shuffle": true,
-            "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 8,
+            "drop_last": true,
+            "pin_memory": true,
+            "prefetch_factor": 4
+
         }
     },
+    "valid_data_loader": {
+        "type": "DataLoader",
+        "args":{
+            "batch_size": 4,
+            "shuffle": false,
+            "num_workers": 0,
+            "drop_last": false,
+            "pin_memory": true
+        }
+    },
+
     "optimizer": {
         "type": "Adam",
         "args":{
