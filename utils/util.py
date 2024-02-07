@@ -36,6 +36,7 @@ CLASSES = [
     "Radius",
     "Ulna",
 ]
+CLASS2IND = {v: i for i, v in enumerate(CLASSES)}
 
 
 def read_json(fname):
