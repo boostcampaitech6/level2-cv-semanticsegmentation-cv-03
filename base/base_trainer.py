@@ -2,6 +2,7 @@ import torch
 from abc import abstractmethod
 from numpy import inf
 import os
+from logger import WandbLogger
 
 
 class BaseTrainer:
@@ -19,6 +20,7 @@ class BaseTrainer:
         self.save_dir = cfg_trainer["save_dir"]
         self.save_period = cfg_trainer["save_period"]
         self.monitor = cfg_trainer.get("monitor", "off")
+        self.logger = WandbLogger(self.config, self.model)
 
         # configuration to monitor model performance and save best
         if self.monitor == "off":
@@ -61,6 +63,7 @@ class BaseTrainer:
             # save logged informations into log dict
             log = {"epoch": epoch, "lr": self.optimizer.param_groups[0]["lr"]}
             log.update(result)
+            self.logger.log_info(log, epoch)
 
             # evaluate model performance according to configured metric, save best checkpoint as model_best
             best = False
@@ -94,8 +97,10 @@ class BaseTrainer:
                     )
                     break
 
-            if epoch % self.save_period == 0:
+            if epoch % self.save_period == 0 or best:
                 self._save_checkpoint(epoch, save_best=best)
+
+        self.logger.finish()
 
     def _make_exp_dir(self, save_dir):
         if not os.path.exists(save_dir):
@@ -136,6 +141,9 @@ class BaseTrainer:
         file_path = os.path.join(self.save_dir, f"epoch_{epoch}.pth")
         torch.save(state, file_path)
         print(f"Saving checkpoint: {file_path} ...")
+
+        # self.logger.log_artifact(file_path)
+        # print(f"Saving wandb artifact: {file_path} ...")
 
         if save_best:
             best_path = os.path.join(self.save_dir, "best.pth")
