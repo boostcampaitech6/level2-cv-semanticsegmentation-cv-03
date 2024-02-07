@@ -12,6 +12,8 @@ from trainer import Trainer
 from utils import prepare_device
 from data_loader.dataset import XRayDataset
 import albumentations as A
+import pickle
+from sklearn.model_selection import GroupKFold
 
 
 SEED = 42
@@ -29,69 +31,89 @@ def set_seeds(seed=42):
 
 
 def main(config):
-    logger = config.get_logger("train")
+    # logger = config.get_logger("train")
+    with open("/data/ephemeral/home/datasets/pngs.pickle", "rb") as f:
+        _filenames = np.array(pickle.load(f))
+    with open("/data/ephemeral/home/datasets/jsons.pickle", "rb") as f:
+        _labelnames = np.array(pickle.load(f))
 
     tf = A.Compose([A.Resize(1024, 1024), A.Normalize])
-    IMAGE_ROOT = "/data/ephemeral/home/datasets/train/DCM"
+    # IMAGE_ROOT = "/data/ephemeral/home/datasets/train/DCM"
     LABEL_ROOT = "/data/ephemeral/home/datasets/train/outputs_json"
     MMAP_PATH = "/data/ephemeral/home/datasets/train_mmap"
     # setup data_loader instances
 
-    train_dataset = XRayDataset(
-        mmap_path=MMAP_PATH,
-        image_root=IMAGE_ROOT,
-        label_root=LABEL_ROOT,
-        is_train=True,
-        transforms=tf,
-    )
-    valid_dataset = XRayDataset(
-        mmap_path=MMAP_PATH,
-        image_root=IMAGE_ROOT,
-        label_root=LABEL_ROOT,
-        is_train=False,
-        transforms=tf,
-    )
+    # group-kfold 구현
+    groups = [os.path.dirname(fname) for fname in _filenames]
+    ys = [0 for fname in _filenames]
+    gkf = GroupKFold(n_splits=5)
 
-    data_loader = config.init_obj(
-        "train_data_loader", torch.utils.data, train_dataset
-    )
-    valid_data_loader = config.init_obj(
-        "valid_data_loader", torch.utils.data, valid_dataset
-    )
-    # build model architecture, then print to console
-    model = config.init_obj("arch", module_arch)
-    logger.info(model)
+    for _, (x, y) in enumerate(gkf.split(_filenames, ys, groups)):
+        train_filenames = list(_filenames[x])
+        train_labelnames = list(_labelnames[x])
+        valid_filenames = list(_filenames[y])
+        valid_labelnames = list(_labelnames[y])
 
-    # prepare for (multi-device) GPU training
-    device, device_ids = prepare_device(config["n_gpu"])
-    model = model.to(device)
-    if len(device_ids) > 1:
-        model = torch.nn.DataParallel(model, device_ids=device_ids)
+        train_dataset = XRayDataset(
+            mmap_path=MMAP_PATH,
+            filenames=train_filenames,
+            labelnames=train_labelnames,
+            label_root=LABEL_ROOT,
+            is_train=True,
+            transforms=tf,
+        )
+        valid_dataset = XRayDataset(
+            mmap_path=MMAP_PATH,
+            filenames=valid_filenames,
+            labelnames=valid_labelnames,
+            label_root=LABEL_ROOT,
+            is_train=False,
+            transforms=tf,
+        )
 
-    # get function handles of loss and metrics
-    criterion = getattr(module_loss, config["loss"])
-    metrics = [getattr(module_metric, met) for met in config["metrics"]]
+        train_data_loader = config.init_obj(
+            "train_data_loader", torch.utils.data, train_dataset
+        )
+        valid_data_loader = config.init_obj(
+            "valid_data_loader", torch.utils.data, valid_dataset
+        )
+        # build model architecture, then print to console
+        model = config.init_obj("arch", module_arch)
+        # logger.info(model)
 
-    # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = config.init_obj("optimizer", torch.optim, trainable_params)
-    lr_scheduler = config.init_obj(
-        "lr_scheduler", torch.optim.lr_scheduler, optimizer
-    )
+        # prepare for (multi-device) GPU training
+        device, device_ids = prepare_device(config["n_gpu"])
+        model = model.to(device)
+        if len(device_ids) > 1:
+            model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    trainer = Trainer(
-        model,
-        criterion,
-        metrics,
-        optimizer,
-        config=config,
-        device=device,
-        data_loader=data_loader,
-        valid_data_loader=valid_data_loader,
-        lr_scheduler=lr_scheduler,
-    )
+        # get function handles of loss and metrics
+        criterion = getattr(module_loss, config["loss"])
+        metrics = [getattr(module_metric, met) for met in config["metrics"]]
 
-    trainer.train()
+        # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
+        trainable_params = filter(
+            lambda p: p.requires_grad, model.parameters()
+        )
+        optimizer = config.init_obj("optimizer", torch.optim, trainable_params)
+        lr_scheduler = config.init_obj(
+            "lr_scheduler", torch.optim.lr_scheduler, optimizer
+        )
+
+        trainer = Trainer(
+            model,
+            criterion,
+            metrics,
+            optimizer,
+            config=config,
+            device=device,
+            data_loader=train_data_loader,
+            valid_data_loader=valid_data_loader,
+            lr_scheduler=lr_scheduler,
+        )
+
+        trainer.train()
+        break
 
 
 if __name__ == "__main__":
