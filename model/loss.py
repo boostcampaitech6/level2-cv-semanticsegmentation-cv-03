@@ -7,20 +7,20 @@ class DiceBCELoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(DiceBCELoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1):
+    def forward(self, outputs, masks, smooth=1):
 
         # comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)
+        outputs = F.sigmoid(outputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        outputs = outputs.view(-1)
+        masks = masks.view(-1)
 
-        intersection = (inputs * targets).sum()
+        intersection = (outputs * masks).sum()
         dice_loss = 1 - (2.0 * intersection + smooth) / (
-            inputs.sum() + targets.sum() + smooth
+            outputs.sum() + masks.sum() + smooth
         )
-        BCE = F.binary_cross_entropy(inputs, targets, reduction="mean")
+        BCE = F.binary_cross_entropy(outputs, masks, reduction="mean")
         Dice_BCE = BCE + dice_loss
 
         return Dice_BCE
@@ -30,18 +30,18 @@ class DiceLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(DiceLoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1):
+    def forward(self, outputs, masks, smooth=1):
 
         # comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)
+        outputs = F.sigmoid(outputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        outputs = outputs.view(-1)
+        masks = masks.view(-1)
 
-        intersection = (inputs * targets).sum()
+        intersection = (outputs * masks).sum()
         dice = (2.0 * intersection + smooth) / (
-            inputs.sum() + targets.sum() + smooth
+            outputs.sum() + masks.sum() + smooth
         )
 
         return 1 - dice
@@ -51,19 +51,19 @@ class IoULoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(IoULoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1):
+    def forward(self, outputs, masks, smooth=1):
 
         # comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)
+        outputs = F.sigmoid(outputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        outputs = outputs.view(-1)
+        masks = masks.view(-1)
 
         # intersection is equivalent to True Positive count
         # union is the mutually inclusive area of all labels & predictions
-        intersection = (inputs * targets).sum()
-        total = (inputs + targets).sum()
+        intersection = (outputs * masks).sum()
+        total = (outputs + masks).sum()
         union = total - intersection
 
         IoU = (intersection + smooth) / (union + smooth)
@@ -75,17 +75,17 @@ class FocalLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(FocalLoss, self).__init__()
 
-    def forward(self, inputs, targets, alpha=0.8, gamma=2, smooth=1):
+    def forward(self, outputs, masks, alpha=0.8, gamma=2, smooth=1):
 
         # comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)
+        outputs = F.sigmoid(outputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        outputs = outputs.view(-1)
+        masks = masks.view(-1)
 
         # first compute binary cross-entropy
-        BCE = F.binary_cross_entropy(inputs, targets, reduction="mean")
+        BCE = F.binary_cross_entropy(outputs, masks, reduction="mean")
         BCE_EXP = torch.exp(-BCE)
         focal_loss = alpha * (1 - BCE_EXP) ** gamma * BCE
 
@@ -96,19 +96,19 @@ class TverskyLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(TverskyLoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1, alpha=0.5, beta=0.5):
+    def forward(self, outputs, masks, smooth=1, alpha=0.5, beta=0.5):
 
         # comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)
+        outputs = F.sigmoid(outputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        outputs = outputs.view(-1)
+        masks = masks.view(-1)
 
         # True Positives, False Positives & False Negatives
-        TP = (inputs * targets).sum()
-        FP = ((1 - targets) * inputs).sum()
-        FN = (targets * (1 - inputs)).sum()
+        TP = (outputs * masks).sum()
+        FP = ((1 - masks) * outputs).sum()
+        FN = (masks * (1 - outputs)).sum()
 
         Tversky = (TP + smooth) / (TP + alpha * FP + beta * FN + smooth)
 
@@ -119,19 +119,19 @@ class FocalTverskyLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(FocalTverskyLoss, self).__init__()
 
-    def forward(self, inputs, targets, smooth=1, alpha=0.5, beta=0.5, gamma=1):
+    def forward(self, outputs, masks, smooth=1, alpha=0.5, beta=0.5, gamma=1):
 
         # comment out if your model contains a sigmoid or equivalent activation layer
-        inputs = F.sigmoid(inputs)
+        outputs = F.sigmoid(outputs)
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        outputs = outputs.view(-1)
+        masks = masks.view(-1)
 
         # True Positives, False Positives & False Negatives
-        TP = (inputs * targets).sum()
-        FP = ((1 - targets) * inputs).sum()
-        FN = (targets * (1 - inputs)).sum()
+        TP = (outputs * masks).sum()
+        FP = ((1 - masks) * outputs).sum()
+        FN = (masks * (1 - outputs)).sum()
 
         Tversky = (TP + smooth) / (TP + alpha * FP + beta * FN + smooth)
         FocalTversky = (1 - Tversky) ** gamma
@@ -143,9 +143,9 @@ class LovaszHingeLoss(nn.Module):
     def __init__(self, weight=None, size_average=True):
         super(LovaszHingeLoss, self).__init__()
 
-    def forward(self, inputs, targets):
-        inputs = F.sigmoid(inputs)
-        Lovasz = self.lovasz_hinge(inputs, targets, per_image=False)
+    def forward(self, outputs, masks):
+        outputs = F.sigmoid(outputs)
+        Lovasz = self.lovasz_hinge(outputs, masks, per_image=False)
         return Lovasz
 
     def flatten_binary_scores(self, scores, labels, ignore=None):
@@ -294,25 +294,25 @@ class ComboLoss(nn.Module):
         super(ComboLoss, self).__init__()
 
     def forward(
-        self, inputs, targets, smooth=1, alpha=0.5, ce_ratio=0.5, eps=1e-9
+        self, outputs, masks, smooth=1, alpha=0.5, ce_ratio=0.5, eps=1e-9
     ):
 
         # flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets = targets.view(-1)
+        outputs = outputs.view(-1)
+        masks = masks.view(-1)
 
         # True Positives, False Positives & False Negatives
-        intersection = (inputs * targets).sum()
+        intersection = (outputs * masks).sum()
         dice = (2.0 * intersection + smooth) / (
-            inputs.sum() + targets.sum() + smooth
+            outputs.sum() + masks.sum() + smooth
         )
 
-        inputs = torch.clamp(inputs, eps, 1.0 - eps)
+        outputs = torch.clamp(outputs, eps, 1.0 - eps)
         out = -(
             alpha
             * (
-                (targets * torch.log(inputs))
-                + ((1 - alpha) * (1.0 - targets) * torch.log(1.0 - inputs))
+                (masks * torch.log(outputs))
+                + ((1 - alpha) * (1.0 - masks) * torch.log(1.0 - outputs))
             )
         )
         weighted_ce = out.mean(-1)
@@ -321,37 +321,37 @@ class ComboLoss(nn.Module):
         return combo
 
 
-def bce_with_logits_loss(inputs, targets):
-    return nn.BCEWithLogitsLoss()(inputs, targets)
+def bce_with_logits_loss(outputs, masks):
+    return nn.BCEWithLogitsLoss()(outputs, masks)
 
 
-def dice_bce_loss(inputs, targets):
-    return DiceBCELoss()(inputs, targets)
+def dice_bce_loss(outputs, masks):
+    return DiceBCELoss()(outputs, masks)
 
 
-def dice_loss(inputs, targets):
-    return DiceLoss()(inputs, targets)
+def dice_loss(outputs, masks):
+    return DiceLoss()(outputs, masks)
 
 
-def iou_loss(inputs, targets):
-    return IoULoss()(inputs, targets)
+def iou_loss(outputs, masks):
+    return IoULoss()(outputs, masks)
 
 
-def focal_loss(inputs, targets):
-    return FocalLoss()(inputs, targets)
+def focal_loss(outputs, masks):
+    return FocalLoss()(outputs, masks)
 
 
-def tversky_loss(inputs, targets):
-    return TverskyLoss()(inputs, targets)
+def tversky_loss(outputs, masks):
+    return TverskyLoss()(outputs, masks)
 
 
-def focal_tversky_loss(inputs, targets):
-    return FocalTverskyLoss()(inputs, targets)
+def focal_tversky_loss(outputs, masks):
+    return FocalTverskyLoss()(outputs, masks)
 
 
-def lovasz_hinge_loss(inputs, targets):
-    return LovaszHingeLoss()(inputs, targets)
+def lovasz_hinge_loss(outputs, masks):
+    return LovaszHingeLoss()(outputs, masks)
 
 
-def combo_loss(inputs, targets):
-    return ComboLoss()(inputs, targets)
+def combo_loss(outputs, masks):
+    return ComboLoss()(outputs, masks)
