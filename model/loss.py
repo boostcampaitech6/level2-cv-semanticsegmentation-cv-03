@@ -322,36 +322,36 @@ class ComboLoss(nn.Module):
 
 
 def bce_with_logits_loss(inputs, targets):
-    return nn.BCEWithLogitsLoss(inputs, targets)
+    return nn.BCEWithLogitsLoss()(inputs, targets)
 
 
 def dice_bce_loss(inputs, targets):
-    return DiceBCELoss(inputs, targets)
+    return DiceBCELoss()(inputs, targets)
 
 
 def dice_loss(inputs, targets):
-    return DiceLoss(inputs, targets)
+    return DiceLoss()(inputs, targets)
 
 
 def iou_loss(inputs, targets):
-    return IoULoss(inputs, targets)
+    return IoULoss()(inputs, targets)
 
 
 def focal_loss(inputs, targets):
-    return FocalLoss(inputs, targets)
+    return FocalLoss()(inputs, targets)
 
 
 def tversky_loss(inputs, targets):
-    return TverskyLoss(inputs, targets)
+    return TverskyLoss()(inputs, targets)
 
 
 def focal_tversky_loss(inputs, targets):
-    return FocalTverskyLoss(inputs, targets)
+    return FocalTverskyLoss()(inputs, targets)
 
 
 def lovasz_hinge_loss(inputs, targets):
-    return LovaszHingeLoss(inputs, targets)
+    return LovaszHingeLoss()(inputs, targets)
 
 
 def combo_loss(inputs, targets):
-    return ComboLoss(inputs, targets)
+    return ComboLoss()(inputs, targets)
