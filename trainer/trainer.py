@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from torch.cuda.amp import autocast, GradScaler
 from base import BaseTrainer
 from utils import MetricTracker
 from tqdm import tqdm
@@ -28,6 +29,7 @@ class Trainer(BaseTrainer):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
+        self.scaler = GradScaler()
 
         self.train_loader = train_loader
         self.valid_loader = valid_loader
@@ -57,13 +59,18 @@ class Trainer(BaseTrainer):
         for _, (images, masks) in enumerate(
             tqdm(self.train_loader, desc=f"[Epoch {epoch} (Train)]")
         ):
-            images, masks = images.to(self.device), masks.to(self.device)
+            images = images.to(self.device, non_blocking=True)
+            masks = masks.to(self.device, non_blocking=True)
 
             self.optimizer.zero_grad()
-            outputs = self.model(images)["out"]
-            loss = self.criterion(outputs, masks)
-            loss.backward()
-            self.optimizer.step()
+
+            with autocast():
+                outputs = self.model(images)["out"]
+                loss = self.criterion(outputs, masks)
+
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
 
             self.train_metrics.update("loss", loss.item())
             for met in self.metrics:
@@ -103,19 +110,21 @@ class Trainer(BaseTrainer):
             for _, (images, masks) in enumerate(
                 tqdm(self.valid_data_loader, desc=f"[Epoch {epoch} (Valid)]")
             ):
-                images, masks = images.to(self.device), masks.to(self.device)
+                images = images.to(self.device, non_blocking=True)
+                masks = masks.to(self.device, non_blocking=True)
 
-                outputs = self.model(images)["out"]
+                with autocast():
+                    outputs = self.model(images)["out"]
 
-                output_h, output_w = outputs.size(-2), outputs.size(-1)
-                mask_h, mask_w = masks.size(-2), masks.size(-1)
+                    output_h, output_w = outputs.size(-2), outputs.size(-1)
+                    mask_h, mask_w = masks.size(-2), masks.size(-1)
 
-                if output_h != mask_h or output_w != mask_w:
-                    outputs = F.interpolate(
-                        outputs, size=(mask_h, mask_w), mode="bilinear"
-                    )
+                    if output_h != mask_h or output_w != mask_w:
+                        outputs = F.interpolate(
+                            outputs, size=(mask_h, mask_w), mode="bilinear"
+                        )
 
-                loss = self.criterion(outputs, masks)
+                    loss = self.criterion(outputs, masks)
 
                 self.valid_metrics.update("loss", loss.item())
                 for met in self.metrics:
