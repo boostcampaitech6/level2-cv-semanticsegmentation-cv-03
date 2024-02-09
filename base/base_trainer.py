@@ -17,10 +17,10 @@ class BaseTrainer:
 
         cfg_trainer = config["trainer"]
         self.epochs = cfg_trainer["epochs"]
-        self.save_dir = cfg_trainer["save_dir"]
         self.save_period = cfg_trainer["save_period"]
         self.monitor = cfg_trainer.get("monitor", "off")
         self.logger = WandbLogger(self.config, self.model)
+        self.save_dir = config.save_dir
 
         # configuration to monitor model performance and save best
         if self.monitor == "off":
@@ -53,8 +53,6 @@ class BaseTrainer:
         """
         Full training logic
         """
-        self.save_dir = self._make_exp_dir(self.save_dir)
-
         not_improved_count = 0
 
         for epoch in range(self.start_epoch, self.epochs + 1):
@@ -97,8 +95,10 @@ class BaseTrainer:
                     )
                     break
 
-            if epoch % self.save_period == 0 or best:
-                self._save_checkpoint(epoch, save_best=best)
+            if epoch % self.save_period == 0:
+                self._save_checkpoint(epoch)
+            if best:
+                self._save_best_checkpoint(epoch)
 
         self.logger.finish()
 
@@ -120,7 +120,7 @@ class BaseTrainer:
 
         return new_exp_dir
 
-    def _save_checkpoint(self, epoch, save_best=False):
+    def _save_checkpoint(self, epoch):
         """
         Saving checkpoints
 
@@ -145,10 +145,27 @@ class BaseTrainer:
         # self.logger.log_artifact(file_path)
         # print(f"Saving wandb artifact: {file_path} ...")
 
-        if save_best:
-            best_path = os.path.join(self.save_dir, "best.pth")
-            torch.save(state, best_path)
-            print("Saving current best: best.pth ...")
+    def _save_best_checkpoint(self, epoch):
+        """
+        Saving checkpoints
+
+        :param epoch: current epoch number
+        :param log: logging information of the epoch
+        :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
+        """
+        arch = type(self.model).__name__
+        state = {
+            "arch": arch,
+            "epoch": epoch,
+            "state_dict": self.model.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "monitor_best": self.mnt_best,
+            "config": self.config,
+        }
+
+        best_path = os.path.join(self.save_dir, "best.pth")
+        torch.save(state, best_path)
+        print(f"Saving current best epoch {epoch}: best.pth ...")
 
     def _resume_checkpoint(self, resume_path):
         """
