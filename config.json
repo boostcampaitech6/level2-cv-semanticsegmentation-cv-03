@@ -1,9 +1,9 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "HandBone",
     "n_gpu": 1,
 
     "arch": {
-        "type": "MnistModel",
+        "type": "FCN_ResNet50",
         "args": {}
     },
     "data_loader": {
