@@ -1,15 +1,12 @@
 import os
-import logging
 from pathlib import Path
 from functools import reduce, partial
 from operator import getitem
-from datetime import datetime
-from logger import setup_logging
 from utils import read_json, write_json
 
 
 class ConfigParser:
-    def __init__(self, config, resume=None, modification=None, run_id=None):
+    def __init__(self, config, resume=None, modification=None):
         """
         class to parse configuration json file. Handles hyperparameters for training, initializations of modules, checkpoint saving
         and logging module.
@@ -23,29 +20,29 @@ class ConfigParser:
         self.resume = resume
 
         # set save_dir where trained model and log will be saved.
-        save_dir = Path(self.config["trainer"]["save_dir"])
+        save_dir = self.config["trainer"]["save_dir"]
+        exp_name = self.config["wandb"]["exp_name"]
 
-        exper_name = self.config["name"]
-        if run_id is None:  # use timestamp as default run-id
-            run_id = datetime.now().strftime(r"%m%d_%H%M%S")
-        self._save_dir = save_dir / "models" / exper_name / run_id
-        self._log_dir = save_dir / "log" / exper_name / run_id
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
 
-        # make directory for saving checkpoints and log.
-        exist_ok = run_id == ""
-        self.save_dir.mkdir(parents=True, exist_ok=exist_ok)
-        self.log_dir.mkdir(parents=True, exist_ok=exist_ok)
+        prev_exp_dir = [
+            d for d in os.listdir(save_dir) if d.startswith(exp_name)
+        ]
+        if prev_exp_dir:
+            latest_exp_num = max(
+                [int(d.replace(exp_name, "")) for d in prev_exp_dir]
+            )
+        else:
+            latest_exp_num = 0
 
-        # save updated config file to the checkpoint dir
-        write_json(self.config, self.save_dir / "config.json")
+        new_exp_name = f"{exp_name}{latest_exp_num + 1}"
+        self._save_dir = os.path.join(save_dir, new_exp_name)
 
-        # configure logging module
-        setup_logging(self.log_dir)
-        self.log_levels = {
-            0: logging.WARNING,
-            1: logging.INFO,
-            2: logging.DEBUG,
-        }
+        if not os.path.exists(self.save_dir):
+            os.mkdir(self.save_dir)
+
+        write_json(self.config, os.path.join(self.save_dir, "config.json"))
 
     @classmethod
     def from_args(cls, args, options=""):
@@ -118,17 +115,6 @@ class ConfigParser:
         """Access items like ordinary dict."""
         return self.config[name]
 
-    def get_logger(self, name, verbosity=2):
-        msg_verbosity = (
-            "verbosity option {} is invalid. Valid options are {}.".format(
-                verbosity, self.log_levels.keys()
-            )
-        )
-        assert verbosity in self.log_levels, msg_verbosity
-        logger = logging.getLogger(name)
-        logger.setLevel(self.log_levels[verbosity])
-        return logger
-
     # setting read-only attributes
     @property
     def config(self):
@@ -137,10 +123,6 @@ class ConfigParser:
     @property
     def save_dir(self):
         return self._save_dir
-
-    @property
-    def log_dir(self):
-        return self._log_dir
 
 
 # helper functions to update config dict with custom cli options
