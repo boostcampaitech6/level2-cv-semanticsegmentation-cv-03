@@ -102,24 +102,6 @@ class BaseTrainer:
 
         self.logger.finish()
 
-    def _make_exp_dir(self, save_dir):
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-
-        prev_exp_dir = [d for d in os.listdir(save_dir) if d.startswith("exp")]
-        if prev_exp_dir:
-            latest_exp_num = max(
-                [int(d.replace("exp", "")) for d in prev_exp_dir]
-            )
-        else:
-            latest_exp_num = 1
-
-        new_exp_name = f"exp{latest_exp_num + 1}"
-        new_exp_dir = os.path.join(save_dir, new_exp_name)
-        os.makedirs(new_exp_dir)
-
-        return new_exp_dir
-
     def _save_checkpoint(self, epoch):
         """
         Saving checkpoints
