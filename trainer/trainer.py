@@ -19,8 +19,8 @@ class Trainer(BaseTrainer):
         optimizer,
         config,
         device,
-        train_loader,
-        valid_loader=None,
+        train_data_loader,
+        valid_data_loader=None,
         lr_scheduler=None,
     ):
         super().__init__(model, optimizer, config)
@@ -31,9 +31,9 @@ class Trainer(BaseTrainer):
         self.optimizer = optimizer
         self.scaler = GradScaler()
 
-        self.train_loader = train_loader
-        self.valid_loader = valid_loader
-        self.do_validation = self.valid_loader is not None
+        self.train_data_loader = train_data_loader
+        self.valid_data_loader = valid_data_loader
+        self.do_validation = self.valid_data_loader is not None
 
         self.lr_scheduler = lr_scheduler
 
@@ -57,7 +57,7 @@ class Trainer(BaseTrainer):
         self.train_metrics.reset()
 
         for _, (images, masks) in enumerate(
-            tqdm(self.train_loader, desc=f"[Epoch {epoch} (Train)]")
+            tqdm(self.train_data_loader, desc=f"[Epoch {epoch} (Train)]")
         ):
             images = images.to(self.device, non_blocking=True)
             masks = masks.to(self.device, non_blocking=True)
