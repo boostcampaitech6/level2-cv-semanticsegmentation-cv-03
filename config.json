@@ -1,19 +1,27 @@
 {
-    "name": "HandBone",
     "n_gpu": 1,
-
     "arch": {
         "type": "FCN_ResNet50",
         "args": {}
     },
-    "data_loader": {
-        "type": "MnistDataLoader",
+    "train_data_loader": {
+        "type": "DataLoader",
         "args":{
-            "data_dir": "data/",
-            "batch_size": 128,
+            "batch_size": 12,
             "shuffle": true,
-            "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 8,
+            "drop_last": false,
+            "pin_memory": true
+        }
+    },
+    "valid_data_loader": {
+        "type": "DataLoader",
+        "args":{
+            "batch_size": 4,
+            "shuffle": false,
+            "num_workers": 4,
+            "drop_last": false,
+            "pin_memory": true
         }
     },
     "optimizer": {
@@ -39,12 +47,26 @@
         "epochs": 100,
 
         "save_dir": "saved/",
-        "save_period": 1,
-        "verbosity": 2,
+        "save_period": 10,
 
         "monitor": "min val_loss",
-        "early_stop": 10,
-
-        "tensorboard": true
+        "early_stop": 10
+    },
+    "threshold": {
+        "pred_thr": 0.5
+    },
+    "wandb": {
+        "project_name": "segmentation",
+        "entity": "funfun_seg",
+        "exp_name": "test"
+    },
+    "path": {
+        "train_path": "/data/ephemeral/home/datasets/train/DCM",
+        "test_path": "/data/ephemeral/home/datasets/test/DCM",
+        "label_path": "/data/ephemeral/home/datasets/train/outputs_json",
+        "mmap_path": "/data/ephemeral/home/datasets/train_mmap",
+        "train_pickle_path": "/data/ephemeral/home/datasets/pngs.pickle",
+        "label_pickle_path": "/data/ephemeral/home/datasets/jsons.pickle",
+        "data_pickle_path": "/data/ephemeral/home/datasets/data.pickle"
     }
 }
