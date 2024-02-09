@@ -61,7 +61,7 @@ class BaseTrainer:
             result = self._train_epoch(epoch)
 
             # save logged informations into log dict
-            log = {"epoch": epoch, "lr": self.optimizer.param_groups[0]["lr"]}
+            log = {"lr": self.optimizer.param_groups[0]["lr"]}
             log.update(result)
             self.logger.log_info(log, epoch)
 
