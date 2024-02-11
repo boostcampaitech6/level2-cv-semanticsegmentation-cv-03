@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.cuda.amp import autocast, GradScaler
 from base import BaseTrainer
-from utils import MetricTracker
+from utils import MetricTracker, CLASSES
 from tqdm import tqdm
 
 
@@ -19,11 +19,12 @@ class Trainer(BaseTrainer):
         optimizer,
         config,
         device,
-        train_loader,
-        valid_loader=None,
+        train_data_loader,
+        valid_data_loader=None,
         lr_scheduler=None,
     ):
         super().__init__(model, optimizer, config)
+        self.config = config
         self.device = device
 
         self.model = model
@@ -31,19 +32,19 @@ class Trainer(BaseTrainer):
         self.optimizer = optimizer
         self.scaler = GradScaler()
 
-        self.train_loader = train_loader
-        self.valid_loader = valid_loader
-        self.do_validation = self.valid_loader is not None
+        self.train_data_loader = train_data_loader
+        self.valid_data_loader = valid_data_loader
+        self.do_validation = self.valid_data_loader is not None
 
         self.lr_scheduler = lr_scheduler
 
         self.metrics = metrics
-        self.train_metrics = MetricTracker(
-            "loss", *[m.__name__ for m in self.metrics]
-        )
+        self.train_metrics = MetricTracker("loss")
         self.valid_metrics = MetricTracker(
-            "loss", *[m.__name__ for m in self.metrics]
+            "loss", *[m.__name__ for m in self.metrics], classes=CLASSES
         )
+
+        self.pred_thr = self.config["threshold"]["pred_thr"]
 
     def _train_epoch(self, epoch):
         """
@@ -57,7 +58,7 @@ class Trainer(BaseTrainer):
         self.train_metrics.reset()
 
         for _, (images, masks) in enumerate(
-            tqdm(self.train_loader, desc=f"[Epoch {epoch} (Train)]")
+            tqdm(self.train_data_loader, desc=f"[Epoch {epoch} (Train)]")
         ):
             images = images.to(self.device, non_blocking=True)
             masks = masks.to(self.device, non_blocking=True)
@@ -73,24 +74,34 @@ class Trainer(BaseTrainer):
             self.scaler.update()
 
             self.train_metrics.update("loss", loss.item())
-            for met in self.metrics:
-                self.train_metrics.update(met.__name__, met(outputs, masks))
+
+            # outputs = torch.sigmoid(outputs)
+            # outputs = (outputs > self.pred_thr).detach().cpu()
+            # masks = masks.detach().cpu()
+
+            # for met in self.metrics:
+            #     self.train_metrics.update(met.__name__, met(outputs, masks))
 
         log = self.train_metrics.result()
-
-        for key, value in log.items():
-            print(f"    {key:15s}: {value} |")
 
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
             log.update(**{"val_" + k: v for k, v in val_log.items()})
 
-            for key, value in val_log.items():
-                print(f"    {key:15s}: {value} |")
+        log_str = [
+            f"\033[94m{key:>10}: {value:.6f} | \033[0m"
+            for key, value in [
+                ("train_loss", log["loss"]),
+                ("valid_loss", val_log["loss"]),
+                ("valid_dice", val_log["dice_coef"]),
+            ]
+        ]
+        log_str = "".join(log_str)
+        print(log_str)
 
         if self.lr_scheduler is not None:
             if self.lr_scheduler.__class__.__name__ == "ReduceLROnPlateau":
-                self.lr_scheduler.step(val_log["loss"])
+                self.lr_scheduler.step(log[self.mnt_metric])
             else:
                 self.lr_scheduler.step()
 
@@ -125,6 +136,10 @@ class Trainer(BaseTrainer):
                         )
 
                     loss = self.criterion(outputs, masks)
+
+                    outputs = torch.sigmoid(outputs)
+                    outputs = (outputs > self.pred_thr).detach().cpu()
+                    masks = masks.detach().cpu()
 
                 self.valid_metrics.update("loss", loss.item())
                 for met in self.metrics:
