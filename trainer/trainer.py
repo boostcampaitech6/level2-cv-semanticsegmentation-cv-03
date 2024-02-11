@@ -66,7 +66,7 @@ class Trainer(BaseTrainer):
             self.optimizer.zero_grad()
 
             with autocast():
-                outputs = self.model(images)["out"]
+                outputs = self.model(images)
                 loss = self.criterion(outputs, masks)
 
             self.scaler.scale(loss).backward()
@@ -125,7 +125,7 @@ class Trainer(BaseTrainer):
                 masks = masks.to(self.device, non_blocking=True)
 
                 with autocast():
-                    outputs = self.model(images)["out"]
+                    outputs = self.model(images)
 
                     output_h, output_w = outputs.size(-2), outputs.size(-1)
                     mask_h, mask_w = masks.size(-2), masks.size(-1)
