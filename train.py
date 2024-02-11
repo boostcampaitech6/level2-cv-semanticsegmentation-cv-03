@@ -2,15 +2,21 @@ import argparse
 import collections
 import os
 import random
-import torch
+import pickle
 import numpy as np
-import data_loader.data_loaders as module_data
+import torch
+from sklearn.model_selection import GroupKFold
+import torch.utils.data as module_data
+from parse_config import ConfigParser
+from data_loader import XRayDataset
+import model.model as module_arch
 import model.loss as module_loss
 import model.metric as module_metric
-import model.model as module_arch
-from parse_config import ConfigParser
+import torch.optim as module_optim
+import torch.optim.lr_scheduler as module_lr
 from trainer import Trainer
 from utils import prepare_device
+
 
 SEED = 42
 
@@ -27,46 +33,85 @@ def set_seeds(seed=42):
 
 
 def main(config):
-    logger = config.get_logger("train")
+    # load files
+    cfg_path = config["path"]
+    with open(cfg_path["train_pickle_path"], "rb") as f:
+        filenames = np.array(pickle.load(f))
+    with open(cfg_path["label_pickle_path"], "rb") as f:
+        labelnames = np.array(pickle.load(f))
+    with open(cfg_path["data_pickle_path"], "rb") as f:
+        hash_dict = pickle.load(f)
 
-    # setup data_loader instances
-    data_loader = config.init_obj("data_loader", module_data)
-    valid_data_loader = data_loader.split_validation()
+    # group k-fold
+    groups = [os.path.dirname(fname) for fname in filenames]
+    ys = [0 for _ in filenames]
+    gkf = GroupKFold(n_splits=5)
 
-    # build model architecture, then print to console
-    model = config.init_obj("arch", module_arch)
-    logger.info(model)
+    for _, (x, y) in enumerate(gkf.split(filenames, ys, groups)):
+        train_filenames = list(filenames[x])
+        train_labelnames = list(labelnames[x])
+        valid_filenames = list(filenames[y])
+        valid_labelnames = list(labelnames[y])
 
-    # prepare for (multi-device) GPU training
-    device, device_ids = prepare_device(config["n_gpu"])
-    model = model.to(device)
-    if len(device_ids) > 1:
-        model = torch.nn.DataParallel(model, device_ids=device_ids)
+        train_dataset = XRayDataset(
+            mmap_path=cfg_path["mmap_path"],
+            filenames=train_filenames,
+            labelnames=train_labelnames,
+            hash_dict=hash_dict,
+            label_root=cfg_path["label_path"],
+            is_train=True,
+        )
+        valid_dataset = XRayDataset(
+            mmap_path=cfg_path["mmap_path"],
+            filenames=valid_filenames,
+            hash_dict=hash_dict,
+            labelnames=valid_labelnames,
+            label_root=cfg_path["label_path"],
+            is_train=False,
+        )
 
-    # get function handles of loss and metrics
-    criterion = getattr(module_loss, config["loss"])
-    metrics = [getattr(module_metric, met) for met in config["metrics"]]
+        train_data_loader = config.init_obj(
+            "train_data_loader", module_data, train_dataset
+        )
+        valid_data_loader = config.init_obj(
+            "valid_data_loader", module_data, valid_dataset
+        )
 
-    # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = config.init_obj("optimizer", torch.optim, trainable_params)
-    lr_scheduler = config.init_obj(
-        "lr_scheduler", torch.optim.lr_scheduler, optimizer
-    )
+        model = config.init_obj("arch", module_arch)
 
-    trainer = Trainer(
-        model,
-        criterion,
-        metrics,
-        optimizer,
-        config=config,
-        device=device,
-        data_loader=data_loader,
-        valid_data_loader=valid_data_loader,
-        lr_scheduler=lr_scheduler,
-    )
+        # prepare for (multi-device) GPU training
+        device, device_ids = prepare_device(config["n_gpu"])
+        model = model.to(device)
+        if len(device_ids) > 1:
+            model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    trainer.train()
+        # get function handles of loss and metrics
+        criterion = getattr(module_loss, config["loss"])
+        metrics = [getattr(module_metric, met) for met in config["metrics"]]
+
+        # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
+        trainable_params = filter(
+            lambda p: p.requires_grad, model.parameters()
+        )
+        optimizer = config.init_obj(
+            "optimizer", module_optim, trainable_params
+        )
+        lr_scheduler = config.init_obj("lr_scheduler", module_lr, optimizer)
+
+        trainer = Trainer(
+            model,
+            criterion,
+            metrics,
+            optimizer,
+            config=config,
+            device=device,
+            train_data_loader=train_data_loader,
+            valid_data_loader=valid_data_loader,
+            lr_scheduler=lr_scheduler,
+        )
+
+        trainer.train()
+        break
 
 
 if __name__ == "__main__":
@@ -76,9 +121,9 @@ if __name__ == "__main__":
     args.add_argument(
         "-c",
         "--config",
-        default=None,
+        default="/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/config.json",
         type=str,
-        help="config file path (default: None)",
+        help="config file path",
     )
     args.add_argument(
         "-r",
@@ -98,14 +143,8 @@ if __name__ == "__main__":
     # custom cli options to modify configuration from default values given in json file.
     CustomArgs = collections.namedtuple("CustomArgs", "flags type target")
     options = [
-        CustomArgs(
-            ["--lr", "--learning_rate"], type=float, target="optimizer;args;lr"
-        ),
-        CustomArgs(
-            ["--bs", "--batch_size"],
-            type=int,
-            target="data_loader;args;batch_size",
-        ),
+        CustomArgs(["-e", "--epoch"], type=int, target="trainer;epochs"),
+        CustomArgs(["-n", "--name"], type=str, target="wandb;exp_name"),
     ]
     config = ConfigParser.from_args(args, options)
     main(config)
