@@ -15,7 +15,7 @@ class FCN_ResNet50(BaseModel):
         )
 
     def forward(self, x):
-        return self.pretrained_model(x)
+        return self.pretrained_model(x)["out"]
 
 
 class FCN_ResNet101(BaseModel):
@@ -30,4 +30,4 @@ class FCN_ResNet101(BaseModel):
         )
 
     def forward(self, x):
-        return self.pretrained_model(x)
+        return self.pretrained_model(x)["out"]
