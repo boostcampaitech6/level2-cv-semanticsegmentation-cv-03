@@ -86,28 +86,67 @@ def prepare_device(n_gpu_use):
 
 
 class MetricTracker:
-    def __init__(self, *keys, writer=None):
-        self.writer = writer
+    def __init__(self, *keys, classes=None):
+        self.keys = keys
+        self.classes = classes
+        self.dices_per_class = None
+
         self._data = pd.DataFrame(
             index=keys, columns=["total", "counts", "average"]
         )
+
         self.reset()
 
     def reset(self):
-        for col in self._data.columns:
-            self._data[col].values[:] = 0
+        self.dices_per_class = None
 
-    def update(self, key, value, n=1):
-        if self.writer is not None:
-            self.writer.add_scalar(key, value)
-        self._data.total[key] += value * n
-        self._data.counts[key] += n
-        self._data.average[key] = (
-            self._data.total[key] / self._data.counts[key]
+        for key in self._data.index:
+            for col in self._data.columns:
+                self._data.loc[key, col] = 0
+
+            if key == "dice_coef":
+                self._data.loc[key, "total"] = []
+
+    def update(self, key, value):
+        if key == "dice_coef":
+            self._data.loc[key, "total"].append(value)
+            self._data.loc[key, "counts"] += 1
+        else:
+            self._data.loc[key, "total"] += value
+            self._data.loc[key, "counts"] += 1
+
+    def avg_dice(self, key="dice_coef"):
+        self._data.loc[key, "total"] = torch.cat(
+            self._data.loc[key, "total"], 0
         )
+        self.dices_per_class = torch.mean(self._data.loc[key, "total"], 0)
 
-    def avg(self, key):
-        return self._data.average[key]
+        return torch.mean(self.dices_per_class).item()
 
     def result(self):
-        return dict(self._data.average)
+        for key in self.keys:
+            if key == "dice_coef":
+                self._data.loc[key, "average"] = self.avg_dice(key)
+            else:
+                self._data.loc[key, "average"] = (
+                    self._data.loc[key, "total"]
+                    / self._data.loc[key, "counts"]
+                )
+
+        concat_df = self._data
+
+        if self.classes is not None:
+            dice_df = pd.DataFrame(
+                index=self.classes, columns=["total", "counts", "average"]
+            )
+
+            for key in dice_df.index:
+                for col in dice_df.columns:
+                    dice_df.loc[key, col] = 0
+
+            for key, value in zip(self.classes, self.dices_per_class):
+                dice_df.loc[key, "average"] = value.item()
+
+            concat_df = pd.concat([self._data, dice_df])
+
+        return dict(concat_df.average)
