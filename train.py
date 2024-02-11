@@ -9,7 +9,7 @@ from sklearn.model_selection import GroupKFold
 import torch.utils.data as module_data
 from parse_config import ConfigParser
 from data_loader import XRayDataset
-import model.model as module_arch
+import model.arch as module_arch
 import model.loss as module_loss
 import model.metric as module_metric
 import torch.optim as module_optim
