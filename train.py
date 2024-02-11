@@ -9,9 +9,9 @@ from sklearn.model_selection import GroupKFold
 import torch.utils.data as module_data
 from parse_config import ConfigParser
 from data_loader import XRayDataset
-import model.model as module_arch
-import model.loss as module_loss
-import model.metric as module_metric
+import model as module_arch
+import trainer.loss as module_loss
+import trainer.metric as module_metric
 import torch.optim as module_optim
 import torch.optim.lr_scheduler as module_lr
 import trainer as module_trainer

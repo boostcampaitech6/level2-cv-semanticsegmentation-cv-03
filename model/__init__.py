@@ -1,3 +1,2 @@
-from .loss import *
-from .metric import *
-from .model import *
+from .torchvision_model import *
+from .smp_model import *
