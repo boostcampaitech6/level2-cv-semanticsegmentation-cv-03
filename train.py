@@ -14,7 +14,7 @@ import model.loss as module_loss
 import model.metric as module_metric
 import torch.optim as module_optim
 import torch.optim.lr_scheduler as module_lr
-from trainer import Trainer
+import trainer as module_trainer
 from utils import prepare_device
 
 
@@ -98,17 +98,18 @@ def main(config):
         )
         lr_scheduler = config.init_obj("lr_scheduler", module_lr, optimizer)
 
-        trainer = Trainer(
-            model,
-            criterion,
-            metrics,
-            optimizer,
-            config=config,
-            device=device,
-            train_data_loader=train_data_loader,
-            valid_data_loader=valid_data_loader,
-            lr_scheduler=lr_scheduler,
-        )
+        train_kwargs = {
+            "model": model,
+            "criterion": criterion,
+            "metrics": metrics,
+            "optimizer": optimizer,
+            "config": config,
+            "device": device,
+            "train_data_loader": train_data_loader,
+            "valid_data_loader": valid_data_loader,
+            "lr_scheduler": lr_scheduler,
+        }
+        trainer = config.init_obj("trainer", module_trainer, **train_kwargs)
 
         trainer.train()
         break
