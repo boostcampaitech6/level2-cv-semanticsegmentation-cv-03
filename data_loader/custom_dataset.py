@@ -1,8 +1,6 @@
 from base import BaseDataset
 import albumentations as A
 
-custom_transform = A.Compose([A.Resize(2048, 2048), A.Normalize()])
-
 
 class CustomDataset(BaseDataset):
     def __init__(
@@ -13,6 +11,7 @@ class CustomDataset(BaseDataset):
         hash_dict,
         labels,
         is_train=True,
+        transforms=A.Compose([A.Resize(2048, 2048), A.Normalize()]),
     ):
         super().__init__(
             mmap_path,
@@ -22,4 +21,4 @@ class CustomDataset(BaseDataset):
             labels,
             is_train=is_train,
         )
-        self.transforms = custom_transform
+        self.transforms = transforms
