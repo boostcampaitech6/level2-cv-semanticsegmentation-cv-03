@@ -3,50 +3,17 @@ import collections
 import os
 import random
 import torch
-import warnings
 import numpy as np
 import pandas as pd
 import torch.nn.functional as F
 import torch.utils.data as module_data
 import data_loader as module_dataset
 import model as module_arch
+from utils import CLASS2IND
 from parse_config import ConfigParser
 from tqdm import tqdm
 
 SEED = 42
-CLASSES = [
-    "finger-1",
-    "finger-2",
-    "finger-3",
-    "finger-4",
-    "finger-5",
-    "finger-6",
-    "finger-7",
-    "finger-8",
-    "finger-9",
-    "finger-10",
-    "finger-11",
-    "finger-12",
-    "finger-13",
-    "finger-14",
-    "finger-15",
-    "finger-16",
-    "finger-17",
-    "finger-18",
-    "finger-19",
-    "Trapezium",
-    "Trapezoid",
-    "Capitate",
-    "Hamate",
-    "Scaphoid",
-    "Lunate",
-    "Triquetrum",
-    "Pisiform",
-    "Radius",
-    "Ulna",
-]
-CLASS2IND = {v: i for i, v in enumerate(CLASSES)}
-IND2CLASS = {v: k for k, v in CLASS2IND.items()}
 
 
 def set_seeds(seed=42):
@@ -127,6 +94,7 @@ def main(config):
     set_seeds(SEED)
     rles = []
     filename_and_class = []
+    IND2CLASS = {v: k for k, v in CLASS2IND.items()}
     with torch.no_grad():
         for step, (images, image_names) in tqdm(
             enumerate(test_data_loader), total=len(test_data_loader)
@@ -159,7 +127,6 @@ def main(config):
 
 
 if __name__ == "__main__":
-    warnings.simplefilter(action="ignore", category=FutureWarning)
     args = argparse.ArgumentParser(description="PyTorch Template")
     args.add_argument(
         "-c",
