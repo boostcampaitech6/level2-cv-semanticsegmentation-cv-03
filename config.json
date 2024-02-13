@@ -23,7 +23,7 @@
     "train_data_loader": {
         "type": "DataLoader",
         "args":{
-            "batch_size": 12,
+            "batch_size": 8,
             "shuffle": true,
             "num_workers": 8,
             "drop_last": false,
@@ -53,7 +53,7 @@
     "optimizer": {
         "type": "Adam",
         "args":{
-            "lr": 0.001,
+            "lr": 1e-3,
             "weight_decay": 0,
             "amsgrad": true
         }
@@ -85,8 +85,8 @@
         "pred_thr": 0.5
     },
     "wandb": {
-        "project_name": "segmentation",
-        "entity": "funfun_seg",
+        "project_name": "funfun-seg",
+        "entity": "gusdn00751",
         "exp_name": "test"
     },
     "path": {
@@ -99,5 +99,9 @@
         "label_data_pickle_path": "/data/ephemeral/home/datasets/label_data.pickle",
         "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/dice_loss_unet_resnet341/best.pth",
         "save_csv_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/output.csv"
+    },
+    "kfold": {
+        "n_splits": 5,
+        "n_iter": 1
     }
 }
