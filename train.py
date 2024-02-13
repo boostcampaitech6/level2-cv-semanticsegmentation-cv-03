@@ -8,8 +8,8 @@ import torch
 from sklearn.model_selection import GroupKFold
 import torch.utils.data as module_data
 from parse_config import ConfigParser
-from data_loader import XRayDataset
 import model as module_arch
+import data_loader as module_dataset
 import trainer.loss as module_loss
 import trainer.metric as module_metric
 import torch.optim as module_optim
@@ -41,6 +41,8 @@ def main(config):
         labelnames = np.array(pickle.load(f))
     with open(cfg_path["data_pickle_path"], "rb") as f:
         hash_dict = pickle.load(f)
+    with open(cfg_path["label_data_pickle_path"], "rb") as f:
+        labels = pickle.load(f)
 
     # group k-fold
     groups = [os.path.dirname(fname) for fname in filenames]
@@ -53,21 +55,24 @@ def main(config):
         valid_filenames = list(filenames[y])
         valid_labelnames = list(labelnames[y])
 
-        train_dataset = XRayDataset(
+        train_dataset = config.init_obj(
+            "train_dataset",
+            module_dataset,
             mmap_path=cfg_path["mmap_path"],
             filenames=train_filenames,
             labelnames=train_labelnames,
             hash_dict=hash_dict,
-            label_root=cfg_path["label_path"],
-            is_train=True,
+            labels=labels,
         )
-        valid_dataset = XRayDataset(
+
+        valid_dataset = config.init_obj(
+            "valid_dataset",
+            module_dataset,
             mmap_path=cfg_path["mmap_path"],
             filenames=valid_filenames,
             hash_dict=hash_dict,
             labelnames=valid_labelnames,
-            label_root=cfg_path["label_path"],
-            is_train=False,
+            labels=labels,
         )
 
         train_data_loader = config.init_obj(
