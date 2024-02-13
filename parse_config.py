@@ -6,7 +6,7 @@ from utils import read_json, write_json
 
 
 class ConfigParser:
-    def __init__(self, config, resume=None, modification=None):
+    def __init__(self, config, resume=None, modification=None, mode="train"):
         """
         class to parse configuration json file. Handles hyperparameters for training, initializations of modules, checkpoint saving
         and logging module.
@@ -19,6 +19,9 @@ class ConfigParser:
         self._config = _update_config(config, modification)
         self.resume = resume
 
+        if mode == "inference":
+            return
+
         # set save_dir where trained model and log will be saved.
         save_dir = self.config["trainer"]["save_dir"]
         exp_name = self.config["wandb"]["exp_name"]
@@ -26,14 +29,22 @@ class ConfigParser:
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
 
+        is_new_dir = True
         prev_exp_dir = [
             d for d in os.listdir(save_dir) if d.startswith(exp_name)
         ]
+
         if prev_exp_dir:
-            latest_exp_num = max(
-                [int(d.replace(exp_name, "")) for d in prev_exp_dir]
-            )
-        else:
+            exp_nums = []
+            for d in prev_exp_dir:
+                try:
+                    exp_nums.append(int(d.replace(exp_name, "")))
+                    latest_exp_num = max(exp_nums)
+                    is_new_dir = False
+                except ValueError:
+                    continue
+
+        if is_new_dir:
             latest_exp_num = 0
 
         new_exp_name = f"{exp_name}{latest_exp_num + 1}"
@@ -45,7 +56,7 @@ class ConfigParser:
         write_json(self.config, os.path.join(self.save_dir, "config.json"))
 
     @classmethod
-    def from_args(cls, args, options=""):
+    def from_args(cls, args, options="", mode="train"):
         """
         Initialize this class from some cli arguments. Used in train, test.
         """
@@ -75,7 +86,7 @@ class ConfigParser:
             opt.target: getattr(args, _get_opt_name(opt.flags))
             for opt in options
         }
-        return cls(config, resume, modification)
+        return cls(config, resume, modification, mode)
 
     def init_obj(self, name, module, *args, **kwargs):
         """
