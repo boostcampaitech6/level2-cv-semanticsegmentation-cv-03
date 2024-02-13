@@ -1,12 +1,18 @@
 import os
-from torch.utils.data import Dataset
-import numpy as np
 import torch
 import cv2
+import albumentations as A
+import numpy as np
+from torch.utils.data import Dataset
 
 
 class InferenceDataset(Dataset):
-    def __init__(self, pngs, image_root, transforms=None):
+    def __init__(
+        self,
+        pngs,
+        image_root,
+        transforms=A.Compose([A.Resize(2048, 2048), A.Normalize()]),
+    ):
         _filenames = pngs
         _filenames = np.array(sorted(_filenames))
 
@@ -22,7 +28,6 @@ class InferenceDataset(Dataset):
         image_path = os.path.join(self.image_root, image_name)
 
         image = cv2.imread(image_path)
-        image = image / 255.0
 
         if self.transforms is not None:
             inputs = {"image": image}
