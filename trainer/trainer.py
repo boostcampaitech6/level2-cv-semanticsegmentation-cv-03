@@ -22,8 +22,9 @@ class Trainer(BaseTrainer):
         train_data_loader,
         valid_data_loader=None,
         lr_scheduler=None,
+        fold=1,
     ):
-        super().__init__(model, optimizer, config)
+        super().__init__(model, optimizer, config, fold)
         self.config = config
         self.device = device
 

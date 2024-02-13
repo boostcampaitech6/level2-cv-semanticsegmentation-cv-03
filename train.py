@@ -47,9 +47,9 @@ def main(config):
     # group k-fold
     groups = [os.path.dirname(fname) for fname in filenames]
     ys = [0 for _ in filenames]
-    gkf = GroupKFold(n_splits=5)
+    gkf = GroupKFold(n_splits=config["kfold"]["n_splits"])
 
-    for _, (x, y) in enumerate(gkf.split(filenames, ys, groups)):
+    for fold, (x, y) in enumerate(gkf.split(filenames, ys, groups), start=1):
         train_filenames = list(filenames[x])
         train_labelnames = list(labelnames[x])
         valid_filenames = list(filenames[y])
@@ -113,11 +113,14 @@ def main(config):
             "train_data_loader": train_data_loader,
             "valid_data_loader": valid_data_loader,
             "lr_scheduler": lr_scheduler,
+            "fold": fold,
         }
         trainer = config.init_obj("trainer", module_trainer, **train_kwargs)
 
         trainer.train()
-        break
+
+        if fold == config["kfold"]["n_iter"]:
+            break
 
 
 if __name__ == "__main__":

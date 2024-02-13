@@ -10,16 +10,17 @@ class BaseTrainer:
     Base class for all trainers
     """
 
-    def __init__(self, model, optimizer, config):
+    def __init__(self, model, optimizer, config, fold=1):
         self.config = config
         self.model = model
         self.optimizer = optimizer
+        self.fold = fold
 
         cfg_trainer = config["trainer"]
         self.epochs = cfg_trainer["epochs"]
         self.save_period = cfg_trainer["save_period"]
         self.monitor = cfg_trainer.get("monitor", "off")
-        self.logger = WandbLogger(self.config, self.model)
+        self.logger = WandbLogger(self.config, self.model, self.fold)
         self.save_dir = config.save_dir
 
         # configuration to monitor model performance and save best
@@ -120,7 +121,9 @@ class BaseTrainer:
             "config": self.config,
         }
 
-        file_path = os.path.join(self.save_dir, f"epoch_{epoch}.pth")
+        file_path = os.path.join(
+            self.save_dir, f"f{self.fold}_epoch_{epoch}.pth"
+        )
         torch.save(state, file_path)
         print(f"Saving checkpoint: {file_path} ...")
 
@@ -145,9 +148,9 @@ class BaseTrainer:
             "config": self.config,
         }
 
-        best_path = os.path.join(self.save_dir, "best.pth")
+        best_path = os.path.join(self.save_dir, f"f{self.fold}_best.pth")
         torch.save(state, best_path)
-        print(f"Saving current best epoch {epoch}: best.pth ...")
+        print(f"Saving current best epoch {epoch}: {best_path} ...")
 
     def _resume_checkpoint(self, resume_path):
         """

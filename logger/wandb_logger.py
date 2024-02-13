@@ -2,19 +2,19 @@ import wandb
 
 
 class WandbLogger:
-    def __init__(self, config, model):
+    def __init__(self, config, model, fold):
         self.cfg_wandb = config["wandb"]
 
         self.run = wandb.init(
             project=self.cfg_wandb["project_name"],
             entity=self.cfg_wandb["entity"],
-            name=self.cfg_wandb["exp_name"],
+            name=self.cfg_wandb["exp_name"] + f"_f{fold}",
             config=config,
         )
         self.run.watch(model)
 
         self.artifact = wandb.Artifact(
-            name=self.cfg_wandb["exp_name"], type="model"
+            name=self.cfg_wandb["exp_name"] + f"_f{fold}", type="model"
         )
 
     def log_info(self, log, epoch):
