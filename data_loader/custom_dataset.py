@@ -1,4 +1,4 @@
-from ..base import BaseDataset
+from base import BaseDataset
 import albumentations as A
 
 custom_transform = A.Compose([A.Resize(2048, 2048), A.Normalize()])
