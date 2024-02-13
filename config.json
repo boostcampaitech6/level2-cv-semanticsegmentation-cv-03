@@ -4,6 +4,18 @@
         "type": "FCN_ResNet50",
         "args": {}
     },
+    "train_dataset": {
+        "type": "XRayDataset",
+        "args": {
+            "is_train": true
+        }
+    },
+    "valid_dataset": {
+        "type": "XRayDataset",
+        "args": {
+            "is_train": false
+        }
+    },
     "train_data_loader": {
         "type": "DataLoader",
         "args":{
@@ -67,10 +79,10 @@
     "path": {
         "train_path": "/data/ephemeral/home/datasets/train/DCM",
         "test_path": "/data/ephemeral/home/datasets/test/DCM",
-        "label_path": "/data/ephemeral/home/datasets/train/outputs_json",
         "mmap_path": "/data/ephemeral/home/datasets/train_mmap",
-        "train_pickle_path": "/data/ephemeral/home/datasets/pngs.pickle",
-        "label_pickle_path": "/data/ephemeral/home/datasets/jsons.pickle",
-        "data_pickle_path": "/data/ephemeral/home/datasets/data.pickle"
+        "image_name_pickle_path": "/data/ephemeral/home/datasets/image_name.pickle",
+        "image_dict_pickle_path": "/data/ephemeral/home/datasets/image_dict.pickle",
+        "label_name_pickle_path": "/data/ephemeral/home/datasets/label_name.pickle",
+        "label_data_pickle_path": "/data/ephemeral/home/datasets/label_data.pickle"
     }
 }
