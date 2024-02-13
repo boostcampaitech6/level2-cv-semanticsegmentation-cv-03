@@ -16,6 +16,10 @@
             "is_train": false
         }
     },
+    "test_dataset": {
+        "type": "InferenceDataset",
+        "args": {}
+    },
     "train_data_loader": {
         "type": "DataLoader",
         "args":{
@@ -32,6 +36,16 @@
             "batch_size": 4,
             "shuffle": false,
             "num_workers": 4,
+            "drop_last": false,
+            "pin_memory": true
+        }
+    },
+    "test_data_loader": {
+        "type": "DataLoader",
+        "args":{
+            "batch_size": 2,
+            "shuffle": false,
+            "num_workers": 2,
             "drop_last": false,
             "pin_memory": true
         }
@@ -82,7 +96,9 @@
         "image_name_pickle_path": "/data/ephemeral/home/datasets/image_name.pickle",
         "image_dict_pickle_path": "/data/ephemeral/home/datasets/image_dict.pickle",
         "label_name_pickle_path": "/data/ephemeral/home/datasets/label_name.pickle",
-        "label_data_pickle_path": "/data/ephemeral/home/datasets/label_data.pickle"
+        "label_data_pickle_path": "/data/ephemeral/home/datasets/label_data.pickle",
+        "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/dice_loss_unet_resnet341/best.pth",
+        "save_csv_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/output.csv"
     },
     "kfold": {
         "n_splits": 5,
