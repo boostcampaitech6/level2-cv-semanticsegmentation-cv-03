@@ -35,11 +35,11 @@ def set_seeds(seed=42):
 def main(config):
     # load files
     cfg_path = config["path"]
-    with open(cfg_path["train_pickle_path"], "rb") as f:
+    with open(cfg_path["image_name_pickle_path"], "rb") as f:
         filenames = np.array(pickle.load(f))
-    with open(cfg_path["label_pickle_path"], "rb") as f:
+    with open(cfg_path["label_name_pickle_path"], "rb") as f:
         labelnames = np.array(pickle.load(f))
-    with open(cfg_path["data_pickle_path"], "rb") as f:
+    with open(cfg_path["image_dict_pickle_path"], "rb") as f:
         hash_dict = pickle.load(f)
     with open(cfg_path["label_data_pickle_path"], "rb") as f:
         labels = pickle.load(f)

@@ -13,8 +13,10 @@ def generate_images(paths):
 
 
 if __name__ == "__main__":
+    DATASET_ROOT = "/data/ephemeral/home/datasets"
     IMAGE_ROOT = "/data/ephemeral/home/datasets/train/DCM"
     LABEL_ROOT = "/data/ephemeral/home/datasets/train/outputs_json"
+
     pngs = {
         os.path.relpath(os.path.join(root, fname), start=IMAGE_ROOT)
         for root, _dirs, files in os.walk(IMAGE_ROOT)
@@ -31,28 +33,28 @@ if __name__ == "__main__":
     pngs = sorted(pngs)
     jsons = sorted(jsons)
 
-    if "train_mmap" not in os.listdir("/data/ephemeral/home/datasets"):
+    if "train_mmap" not in os.listdir(DATASET_ROOT):
         pngss = [os.path.join(IMAGE_ROOT, temp) for temp in pngs]
         RaggedMmap.from_generator(
-            out_dir="/data/ephemeral/home/datasets/train_mmap",
+            out_dir=os.path.join(DATASET_ROOT, "train_mmap"),
             sample_generator=generate_images(pngss),
             batch_size=64,
             verbose=True,
         )
-    if "hash.pickle" not in os.listdir("/data/ephemeral/home/datasets"):
+    if "image_dict.pickle" not in os.listdir(DATASET_ROOT):
         hash_dict = {}
         for i in range(len(pngs)):
             hash_dict[pngs[i]] = i
 
-        with open("/data/ephemeral/home/datasets/data.pickle", "wb") as f:
+        with open(os.path.join(DATASET_ROOT, "image_dict.pickle"), "wb") as f:
             pickle.dump(hash_dict, f, pickle.HIGHEST_PROTOCOL)
-        with open("/data/ephemeral/home/datasets/pngs.pickle", "wb") as f:
+        with open(os.path.join(DATASET_ROOT, "image_name.pickle"), "wb") as f:
             pickle.dump(pngs, f, pickle.HIGHEST_PROTOCOL)
-        with open("/data/ephemeral/home/datasets/jsons.pickle", "wb") as f:
+        with open(os.path.join(DATASET_ROOT, "label_name.pickle"), "wb") as f:
             pickle.dump(jsons, f, pickle.HIGHEST_PROTOCOL)
 
-    if "label.pickle" not in os.listdir("/data/ephemeral/home/datasets"):
-        imgs = RaggedMmap("data/ephemeral/home/datasets/train_mmap")
+    if "label_data.pickle" not in os.listdir(DATASET_ROOT):
+        imgs = RaggedMmap(os.path.join(DATASET_ROOT, "train_mmap"))
         labels = {}
 
         for i in range(len(jsons)):
@@ -81,5 +83,5 @@ if __name__ == "__main__":
 
             labels[jsons[i]] = label
 
-        with open("/ddata/ephemeral/home/datasets/label.pickle", "wb") as f:
+        with open(os.path.join(DATASET_ROOT, "label_data.pickle"), "wb") as f:
             pickle.dump(labels, f, pickle.HIGHEST_PROTOCOL)
