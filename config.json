@@ -24,6 +24,7 @@
             "pin_memory": true
         }
     },
+
     "optimizer": {
         "type": "Adam",
         "args":{
