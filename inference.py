@@ -13,8 +13,6 @@ from utils import CLASS2IND
 from parse_config import ConfigParser
 from tqdm import tqdm
 
-SEED = 42
-
 
 def set_seeds(seed=42):
     torch.manual_seed(seed)
@@ -91,7 +89,7 @@ def main(config):
     model = model.to(device)
     model.eval()
 
-    set_seeds(SEED)
+    set_seeds()
     rles = []
     filename_and_class = []
     IND2CLASS = {v: k for k, v in CLASS2IND.items()}
