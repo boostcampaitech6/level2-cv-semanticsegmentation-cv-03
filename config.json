@@ -5,13 +5,13 @@
         "args": {}
     },
     "train_dataset": {
-        "type": "XRayDataset",
+        "type": "CustomDataset",
         "args": {
             "is_train": true
         }
     },
     "valid_dataset": {
-        "type": "XRayDataset",
+        "type": "CustomDataset",
         "args": {
             "is_train": false
         }
@@ -19,7 +19,7 @@
     "train_data_loader": {
         "type": "DataLoader",
         "args":{
-            "batch_size": 12,
+            "batch_size": 8,
             "shuffle": true,
             "num_workers": 8,
             "drop_last": false,
@@ -36,11 +36,10 @@
             "pin_memory": true
         }
     },
-
     "optimizer": {
         "type": "Adam",
         "args":{
-            "lr": 0.001,
+            "lr": 1e-3,
             "weight_decay": 0,
             "amsgrad": true
         }
@@ -72,8 +71,8 @@
         "pred_thr": 0.5
     },
     "wandb": {
-        "project_name": "segmentation",
-        "entity": "funfun_seg",
+        "project_name": "funfun-seg",
+        "entity": "gusdn00751",
         "exp_name": "test"
     },
     "path": {
@@ -84,5 +83,9 @@
         "image_dict_pickle_path": "/data/ephemeral/home/datasets/image_dict.pickle",
         "label_name_pickle_path": "/data/ephemeral/home/datasets/label_name.pickle",
         "label_data_pickle_path": "/data/ephemeral/home/datasets/label_data.pickle"
+    },
+    "kfold": {
+        "n_splits": 5,
+        "n_iter": 1
     }
 }
