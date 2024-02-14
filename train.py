@@ -41,8 +41,6 @@ def main(config):
         labelnames = np.array(pickle.load(f))
     with open(cfg_path["image_dict_pickle_path"], "rb") as f:
         hash_dict = pickle.load(f)
-    with open(cfg_path["label_data_pickle_path"], "rb") as f:
-        labels = pickle.load(f)
 
     # group k-fold
     groups = [os.path.dirname(fname) for fname in filenames]
@@ -62,7 +60,7 @@ def main(config):
             filenames=train_filenames,
             labelnames=train_labelnames,
             hash_dict=hash_dict,
-            labels=labels,
+            label_root=cfg_path["label_path"],
         )
 
         valid_dataset = config.init_obj(
@@ -72,7 +70,7 @@ def main(config):
             filenames=valid_filenames,
             hash_dict=hash_dict,
             labelnames=valid_labelnames,
-            labels=labels,
+            label_root=cfg_path["label_path"],
         )
 
         train_data_loader = config.init_obj(
