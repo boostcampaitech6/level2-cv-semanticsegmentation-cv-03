@@ -31,6 +31,18 @@ class SemanticSegmentationTarget:
         return (model_output[self.category, :, : ] * self.mask).sum()
     
 
+@st.cache_data
+def model_load(model_path):
+    if model_path.split('.')[-1] == 'pt':
+        model = torch.load(model_path)
+    else:
+        model = torch.load(model_path)
+        state_dict = model["state_dict"]
+        model = model.load_state_dict(state_dict)
+
+    return model
+    
+
 def gradcam(model, target_layers, index, image_path, hand):
     path = os.path.join(image_path, hand)
 
@@ -90,9 +102,7 @@ def main():
     model = Unet
     model_path = '/data/ephemeral/home/save_dir/resnet34_unet_best_model_start100.pt'
 
-    model = torch.load(model_path)
-    # state_dict = model_load["state_dict"]
-    # model.load_state_dict(state_dict)
+    model = model_load(model_path)
     model = model.eval()
 
     target_layers = [model.decoder.blocks[4].conv2]
