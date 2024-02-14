@@ -9,7 +9,7 @@ class CustomDataset(BaseDataset):
         filenames,
         labelnames,
         hash_dict,
-        labels,
+        label_root,
         is_train=True,
         transforms=A.Compose([A.Resize(2048, 2048), A.Normalize()]),
     ):
@@ -18,7 +18,7 @@ class CustomDataset(BaseDataset):
             filenames,
             labelnames,
             hash_dict,
-            labels,
+            label_root,
             is_train=is_train,
         )
         self.transforms = transforms
