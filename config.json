@@ -90,13 +90,13 @@
         "exp_name": "test"
     },
     "path": {
+        "label_path": "/data/ephemeral/home/datasets/train/outputs_json",
         "train_path": "/data/ephemeral/home/datasets/train/DCM",
         "test_path": "/data/ephemeral/home/datasets/test/DCM",
         "mmap_path": "/data/ephemeral/home/datasets/train_mmap",
         "image_name_pickle_path": "/data/ephemeral/home/datasets/image_name.pickle",
         "image_dict_pickle_path": "/data/ephemeral/home/datasets/image_dict.pickle",
         "label_name_pickle_path": "/data/ephemeral/home/datasets/label_name.pickle",
-        "label_data_pickle_path": "/data/ephemeral/home/datasets/label_data.pickle",
         "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/dice_loss_unet_resnet341/best.pth",
         "save_csv_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/output.csv"
     },
