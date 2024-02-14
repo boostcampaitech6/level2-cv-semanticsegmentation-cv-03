@@ -78,7 +78,7 @@
         "save_dir": "saved/",
         "save_period": 10,
 
-        "monitor": "min val_loss",
+        "monitor": "max val_dice_coef",
         "early_stop": 10
     },
     "threshold": {
