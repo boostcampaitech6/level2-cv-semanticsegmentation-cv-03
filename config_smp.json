@@ -9,19 +9,15 @@
         }
     },
     "train_dataset": {
-        "type": "CustomDataset",
-        "args": {
-            "is_train": true
-        }
+        "type": "TrainDataset",
+        "args": {}
     },
     "valid_dataset": {
-        "type": "CustomDataset",
-        "args": {
-            "is_train": false
-        }
+        "type": "ValidDataset",
+        "args": {}
     },
     "test_dataset": {
-        "type": "InferenceDataset",
+        "type": "TestDataset",
         "args": {}
     },
     "train_data_loader": {
@@ -107,5 +103,29 @@
     "kfold": {
         "n_splits": 5,
         "n_iter": 1
-    }
+    },
+    "train_transforms": [
+        {
+            "name": "Resize",
+            "args": [1024, 1024],
+            "kwargs": {}
+        },
+        {
+            "name": "Normalize",
+            "args": [],
+            "kwargs": {}
+        }
+    ],
+    "test_transforms": [
+        {
+            "name": "Resize",
+            "args": [1024, 1024],
+            "kwargs": {}
+        },
+        {
+            "name": "Normalize",
+            "args": [],
+            "kwargs": {}
+        }
+    ]
 }
