@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torch.utils.data as module_data
 import data_loader as module_dataset
 import model as module_arch
-from utils import CLASS2IND
+from utils import IND2CLASS
 from parse_config import ConfigParser
 from tqdm import tqdm
 
@@ -57,6 +57,7 @@ def decode_rle_to_mask(rle, height, width):
 
 
 def main(config):
+    set_seeds()
     image_root = config["path"]["test_path"]
     threshold = config["threshold"]["pred_thr"]
     save_csv_path = config["path"]["save_csv_path"]
@@ -89,10 +90,8 @@ def main(config):
     model = model.to(device)
     model.eval()
 
-    set_seeds()
     rles = []
     filename_and_class = []
-    IND2CLASS = {v: k for k, v in CLASS2IND.items()}
     with torch.no_grad():
         for step, (images, image_names) in tqdm(
             enumerate(test_data_loader), total=len(test_data_loader)
@@ -129,7 +128,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-c",
         "--config",
-        default=None,
+        default="/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/config.json",
         type=str,
         help="config file path (default: None)",
     )
@@ -162,6 +161,6 @@ if __name__ == "__main__":
             ["-t", "--pred_thr"], type=int, target="threshold;pred_thr"
         ),
     ]
-    config = ConfigParser.from_args(args, options)
+    config = ConfigParser.from_args(args, options, mode="inference")
 
     main(config)

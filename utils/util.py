@@ -37,6 +37,7 @@ CLASSES = [
     "Ulna",
 ]
 CLASS2IND = {v: i for i, v in enumerate(CLASSES)}
+IND2CLASS = {v: k for k, v in CLASS2IND.items()}
 
 
 def read_json(fname):
