@@ -9,6 +9,7 @@ import torch.nn.functional as F
 import torch.utils.data as module_data
 import data_loader as module_dataset
 import model as module_arch
+import albumentations as A
 from utils import IND2CLASS, encode_mask_to_rle
 from parse_config import ConfigParser
 from tqdm import tqdm
@@ -36,11 +37,23 @@ def main(config):
         for fname in files
         if os.path.splitext(fname)[1].lower() == ".png"
     }
+
+    test_tf_list = []
+
+    if config["use_config_transforms"]:
+        for tf in config["test_transforms"]:
+            test_tf_list.append(
+                getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+            )
+    else:
+        test_tf_list = None
+
     test_dataset = config.init_obj(
         "test_dataset",
         module_dataset,
         pngs=pngs,
         image_root=image_root,
+        transforms=test_tf_list,
     )
     test_data_loader = config.init_obj(
         "test_data_loader", module_data, test_dataset
