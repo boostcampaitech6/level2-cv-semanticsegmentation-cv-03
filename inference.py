@@ -39,14 +39,10 @@ def main(config):
     }
 
     test_tf_list = []
-
-    if config["use_config_transforms"]:
-        for tf in config["test_transforms"]:
-            test_tf_list.append(
-                getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
-            )
-    else:
-        test_tf_list = None
+    for tf in config["test_transforms"]:
+        test_tf_list.append(
+            getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+        )
 
     test_dataset = config.init_obj(
         "test_dataset",
