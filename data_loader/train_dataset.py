@@ -1,42 +1,39 @@
 import json
 import os
 import cv2
-
-# external library
-from mmap_ninja.ragged import RaggedMmap
 import numpy as np
-
-# torch
 import torch
 from torch.utils.data import Dataset
+import albumentations as A
+from mmap_ninja.ragged import RaggedMmap
 from utils.util import CLASS2IND, CLASSES
 
 
-class BaseDataset(Dataset):
+class TrainDataset(Dataset):
     def __init__(
         self,
-        mmap_path,
         filenames,
         labelnames,
         hash_dict,
+        mmap_path,
         label_root,
-        is_train=True,
+        transforms=None,
     ):
 
-        self.mmap = RaggedMmap(mmap_path)
-        self.hash_dict = hash_dict
         self.filenames = filenames
         self.labelnames = labelnames
-        self.is_train = is_train
+        self.hash_dict = hash_dict
+        self.mmap = RaggedMmap(mmap_path)
         self.label_root = label_root
-        self.transforms = None
+        self.transforms = (
+            A.Compose(transforms) if transforms is not None else None
+        )
 
     def __len__(self):
         return len(self.filenames)
 
     def __getitem__(self, item):
         image_name = self.filenames[item]
-        # image_path = os.path.join(self.image_root, image_name)
         image = self.mmap[self.hash_dict[image_name]]
 
         label_name = self.labelnames[item]
@@ -64,15 +61,11 @@ class BaseDataset(Dataset):
 
         # Transform
         if self.transforms is not None:
-            inputs = (
-                {"image": image, "mask": label}
-                if self.is_train
-                else {"image": image}
-            )
+            inputs = {"image": image, "mask": label}
             result = self.transforms(**inputs)
 
             image = result["image"]
-            label = result["mask"] if self.is_train else label
+            label = result["mask"]
 
         # to tenser will be done later
         image = image.transpose(2, 0, 1)  # channel first 포맷으로 변경합니다.

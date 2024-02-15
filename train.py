@@ -16,6 +16,7 @@ import torch.optim as module_optim
 import torch.optim.lr_scheduler as module_lr
 import trainer as module_trainer
 from utils import prepare_device
+import albumentations as A
 
 
 SEED = 42
@@ -53,24 +54,40 @@ def main(config):
         valid_filenames = list(filenames[y])
         valid_labelnames = list(labelnames[y])
 
+        train_tf_list, test_tf_list = [], []
+
+        if config["use_config_transforms"]:
+            for tf in config["train_transforms"]:
+                train_tf_list.append(
+                    getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+                )
+            for tf in config["test_transforms"]:
+                test_tf_list.append(
+                    getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+                )
+        else:
+            train_tf_list, test_tf_list = None, None
+
         train_dataset = config.init_obj(
             "train_dataset",
             module_dataset,
-            mmap_path=cfg_path["mmap_path"],
             filenames=train_filenames,
             labelnames=train_labelnames,
             hash_dict=hash_dict,
+            mmap_path=cfg_path["mmap_path"],
             label_root=cfg_path["label_path"],
+            transforms=train_tf_list,
         )
 
         valid_dataset = config.init_obj(
             "valid_dataset",
             module_dataset,
-            mmap_path=cfg_path["mmap_path"],
             filenames=valid_filenames,
-            hash_dict=hash_dict,
             labelnames=valid_labelnames,
+            hash_dict=hash_dict,
+            mmap_path=cfg_path["mmap_path"],
             label_root=cfg_path["label_path"],
+            transforms=test_tf_list,
         )
 
         train_data_loader = config.init_obj(

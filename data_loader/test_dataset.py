@@ -1,24 +1,19 @@
 import os
 import torch
 import cv2
-import albumentations as A
 import numpy as np
 from torch.utils.data import Dataset
+import albumentations as A
 
 
-class InferenceDataset(Dataset):
-    def __init__(
-        self,
-        pngs,
-        image_root,
-        transforms=A.Compose([A.Resize(2048, 2048), A.Normalize()]),
-    ):
-        _filenames = pngs
-        _filenames = np.array(sorted(_filenames))
+class TestDataset(Dataset):
+    def __init__(self, pngs, image_root, transforms=None):
 
+        self.filenames = np.array(sorted(pngs))
         self.image_root = image_root
-        self.filenames = _filenames
-        self.transforms = transforms
+        self.transforms = (
+            A.Compose(transforms) if transforms is not None else None
+        )
 
     def __len__(self):
         return len(self.filenames)
@@ -32,11 +27,11 @@ class InferenceDataset(Dataset):
         if self.transforms is not None:
             inputs = {"image": image}
             result = self.transforms(**inputs)
+
             image = result["image"]
 
         # to tenser will be done later
         image = image.transpose(2, 0, 1)
-
         image = torch.from_numpy(image).float()
 
         return image, image_name
