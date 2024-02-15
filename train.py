@@ -48,25 +48,22 @@ def main(config):
     ys = [0 for _ in filenames]
     gkf = GroupKFold(n_splits=config["kfold"]["n_splits"])
 
+    # transform
+    train_tf_list, test_tf_list = [], []
+    for tf in config["train_transforms"]:
+        train_tf_list.append(
+            getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+        )
+    for tf in config["test_transforms"]:
+        test_tf_list.append(
+            getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+        )
+
     for fold, (x, y) in enumerate(gkf.split(filenames, ys, groups), start=1):
         train_filenames = list(filenames[x])
         train_labelnames = list(labelnames[x])
         valid_filenames = list(filenames[y])
         valid_labelnames = list(labelnames[y])
-
-        train_tf_list, test_tf_list = [], []
-
-        if config["use_config_transforms"]:
-            for tf in config["train_transforms"]:
-                train_tf_list.append(
-                    getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
-                )
-            for tf in config["test_transforms"]:
-                test_tf_list.append(
-                    getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
-                )
-        else:
-            train_tf_list, test_tf_list = None, None
 
         train_dataset = config.init_obj(
             "train_dataset",

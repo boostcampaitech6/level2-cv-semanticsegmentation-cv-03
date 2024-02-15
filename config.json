@@ -100,8 +100,6 @@
         "n_splits": 5,
         "n_iter": 1
     },
-
-    "use_config_transforms": true,
     "train_transforms": [
         {
             "name": "Resize",
