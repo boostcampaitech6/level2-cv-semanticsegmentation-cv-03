@@ -17,7 +17,7 @@ from util import CLASSES, CLASS2IND
 from model import Unet, Linknet, FPN, PSPNet, PAN, FCN_ResNet50, FCN_ResNet101
 
 
-IMAGE_ROOT = "/data/ephemeral/home/test/DCM"
+IMAGE_ROOT = "/data/ephemeral/home/datasets/test/DCM"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -31,14 +31,16 @@ class SemanticSegmentationTarget:
         return (model_output[self.category, :, : ] * self.mask).sum()
     
 
-@st.cache_data
-def model_load(model_path):
-    if model_path.split('.')[-1] == 'pt':
+def model_load(model_name, model_path):
+    if model_path.endswith('.pt'):
         model = torch.load(model_path)
+    elif model_path.endswith('.pth'):
+        model = model_name
+        model_path = torch.load(model_path)
+        model = model.load_state_dict(model_path)
     else:
-        model = torch.load(model_path)
-        state_dict = model["state_dict"]
-        model = model.load_state_dict(state_dict)
+        st.warning("잘못된 확장자명이 입력되었습니다. .pt 또는 .pth 확장자를 사용해 주세요.")
+        model = None
 
     return model
     
@@ -99,10 +101,10 @@ def main():
     title = list(set(title))
     title = sorted(title)
 
-    model = Unet
+    model_name = Unet
     model_path = '/data/ephemeral/home/save_dir/resnet34_unet_best_model_start100.pt'
 
-    model = model_load(model_path)
+    model = model_load(model_name, model_path)
     model = model.eval()
 
     target_layers = [model.decoder.blocks[4].conv2]
