@@ -55,15 +55,18 @@ def main(config):
         valid_labelnames = list(labelnames[y])
 
         train_tf_list, test_tf_list = [], []
-        for tf in config["train_transforms"]:
-            train_tf_list.append(
-                getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
-            )
 
-        for tf in config["test_transforms"]:
-            test_tf_list.append(
-                getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
-            )
+        if config["use_config_transforms"]:
+            for tf in config["train_transforms"]:
+                train_tf_list.append(
+                    getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+                )
+            for tf in config["test_transforms"]:
+                test_tf_list.append(
+                    getattr(A, tf["name"])(*tf["args"], **tf["kwargs"])
+                )
+        else:
+            train_tf_list, test_tf_list = None, None
 
         train_dataset = config.init_obj(
             "train_dataset",
