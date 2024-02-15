@@ -17,7 +17,7 @@ class ValidDataset(Dataset):
         hash_dict,
         mmap_path,
         label_root,
-        transforms=[A.Normalize()],
+        transforms=None,
     ):
 
         self.filenames = filenames
@@ -25,7 +25,9 @@ class ValidDataset(Dataset):
         self.hash_dict = hash_dict
         self.mmap = RaggedMmap(mmap_path)
         self.label_root = label_root
-        self.transforms = A.Compose(transforms)
+        self.transforms = (
+            A.Compose(transforms) if transforms is not None else None
+        )
 
     def __len__(self):
         return len(self.filenames)

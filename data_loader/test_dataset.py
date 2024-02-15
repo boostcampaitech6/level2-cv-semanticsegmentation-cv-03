@@ -7,11 +7,13 @@ import albumentations as A
 
 
 class TestDataset(Dataset):
-    def __init__(self, pngs, image_root, transforms=[A.Normalize()]):
+    def __init__(self, pngs, image_root, transforms=None):
 
         self.filenames = np.array(sorted(pngs))
         self.image_root = image_root
-        self.transforms = A.Compose(transforms)
+        self.transforms = (
+            A.Compose(transforms) if transforms is not None else None
+        )
 
     def __len__(self):
         return len(self.filenames)
