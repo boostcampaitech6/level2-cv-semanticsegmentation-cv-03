@@ -85,14 +85,14 @@
     "wandb": {
         "project_name": "funfun-seg",
         "entity": "gusdn00751",
-        "exp_name": "test_rudeuns"
+        "exp_name": "test"
     },
     "path": {
         "train_root": "/data/ephemeral/home/datasets/train/DCM",
         "test_root": "/data/ephemeral/home/datasets/test/DCM",
         "mask_root": "/data/ephemeral/home/datasets/mask_bin",
-        "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/fine_tune_3/f1_best.pth",
-        "save_csv_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/result/fine_tune_3.csv"
+        "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/test/f1_best.pth",
+        "save_csv_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/output.csv"
     },
     "kfold": {
         "n_splits": 5,
