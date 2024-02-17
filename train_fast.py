@@ -80,7 +80,7 @@ def main(config):
             module_dataset,
             image_paths=valid_image_paths,
             mask_paths=valid_mask_paths,
-            transforms=train_tf_list,
+            transforms=test_tf_list,
         )
 
         train_data_loader = config.init_obj(
