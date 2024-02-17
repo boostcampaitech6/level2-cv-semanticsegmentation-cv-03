@@ -171,3 +171,65 @@ class MetricTracker:
             concat_df = pd.concat([self._data, dice_df])
 
         return dict(concat_df.average)
+
+
+class DictMetricTracker:
+    def __init__(self, *keys, classes=None):
+        self.keys = keys
+        self.classes = classes
+        self.dices_per_class = None
+
+        self._data = {
+            key: {"total": None, "counts": None, "average": None}
+            for key in self.keys
+        }
+
+        self.reset()
+
+    def reset(self):
+        self.dices_per_class = None
+
+        for key in self.keys:
+            self._data[key]["total"] = 0
+            self._data[key]["counts"] = 0
+            self._data[key]["average"] = 0
+
+        if "dice_coef" in self.keys:
+            self._data["dice_coef"]["total"] = []
+
+    def update(self, key, value):
+        if key == "dice_coef":
+            self._data[key]["total"].append(value)
+            self._data[key]["counts"] += 1
+        else:
+            self._data[key]["total"] += value
+            self._data[key]["counts"] += 1
+
+    def avg_dice(self, key="dice_coef"):
+        self._data[key]["total"] = torch.cat(self._data[key]["total"], 0)
+        self.dices_per_class = torch.mean(self._data[key]["total"], 0)
+
+        return torch.mean(self.dices_per_class).item()
+
+    def result(self):
+        for key in self.keys:
+            if key == "dice_coef":
+                self._data[key]["average"] = self.avg_dice(key)
+            else:
+                self._data[key]["average"] = (
+                    self._data[key]["total"] / self._data[key]["counts"]
+                )
+
+        concat_data = {key: self._data[key]["average"] for key in self.keys}
+
+        if self.classes is not None:
+            dice_data = {key: {"average": 0} for key in self.classes}
+
+            for key, value in zip(self.classes, self.dices_per_class):
+                dice_data[key]["average"] = value.item()
+
+            concat_data.update(
+                {key: dice_data[key]["average"] for key in self.classes}
+            )
+
+        return concat_data
