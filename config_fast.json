@@ -121,5 +121,6 @@
             "args": [],
             "kwargs": {}
         }
-    ]
+    ],
+    "fine_tuning_mode": false
 }
