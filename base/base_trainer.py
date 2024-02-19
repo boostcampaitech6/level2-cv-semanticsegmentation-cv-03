@@ -62,7 +62,6 @@ class BaseTrainer:
             # save logged informations into log dict
             log = {"lr": self.optimizer.param_groups[0]["lr"]}
             log.update(result)
-            self.logger.log_info(log, epoch)
 
             # evaluate model performance according to configured metric, save best checkpoint as model_best
             best = False
@@ -90,11 +89,14 @@ class BaseTrainer:
                 else:
                     not_improved_count += 1
 
-                if not_improved_count > self.early_stop:
+                if not_improved_count >= self.early_stop:
                     print(
                         f"Validation performance didn't improve for {self.early_stop} epochs. Training stops."
                     )
                     break
+
+            log.update({"best_dice": self.mnt_best})
+            self.logger.log_info(log, epoch)
 
             if epoch % self.save_period == 0:
                 self._save_checkpoint(epoch)
@@ -150,7 +152,7 @@ class BaseTrainer:
 
         best_path = os.path.join(self.save_dir, f"f{self.fold}_best.pth")
         torch.save(state, best_path)
-        print(f"Saving current best epoch {epoch}: {best_path} ...")
+        print(f"\033[91mSaving best epoch {epoch}: {best_path} ...\033[0m")
 
     def _resume_checkpoint(self, resume_path):
         """
@@ -162,8 +164,6 @@ class BaseTrainer:
         print(f"Loading checkpoint: {resume_path} ...")
 
         checkpoint = torch.load(resume_path)
-        self.start_epoch = checkpoint["epoch"] + 1
-        self.mnt_best = checkpoint["monitor_best"]
 
         # load architecture params from checkpoint.
         if checkpoint["config"]["arch"] != self.config["arch"]:
@@ -172,17 +172,23 @@ class BaseTrainer:
             )
         self.model.load_state_dict(checkpoint["state_dict"])
 
-        # load optimizer state from checkpoint only when optimizer type is not changed.
-        if (
-            checkpoint["config"]["optimizer"]["type"]
-            != self.config["optimizer"]["type"]
-        ):
-            print(
-                "Warning: Optimizer type given in config file is different from that of checkpoint. Optimizer parameters not being resumed."
-            )
+        if self.config["fine_tuning_mode"]:
+            print("Checkpoint loaded. Start fine tuning")
         else:
-            self.optimizer.load_state_dict(checkpoint["optimizer"])
+            self.start_epoch = checkpoint["epoch"] + 1
+            self.mnt_best = checkpoint["monitor_best"]
 
-        print(
-            f"Checkpoint loaded. Resume training from epoch {self.start_epoch}"
-        )
+            # load optimizer state from checkpoint only when optimizer type is not changed.
+            if (
+                checkpoint["config"]["optimizer"]["type"]
+                != self.config["optimizer"]["type"]
+            ):
+                print(
+                    "Warning: Optimizer type given in config file is different from that of checkpoint. Optimizer parameters not being resumed."
+                )
+            else:
+                self.optimizer.load_state_dict(checkpoint["optimizer"])
+
+            print(
+                f"Checkpoint loaded. Resume training from epoch {self.start_epoch}"
+            )

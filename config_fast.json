@@ -89,8 +89,8 @@
     },
     "path": {
         "train_root": "/data/ephemeral/home/datasets/train/DCM",
-        "test_root": "/data/ephemeral/home/datasets/test/DCM",
         "mask_root": "/data/ephemeral/home/datasets/mask_bin",
+        "test_path": "/data/ephemeral/home/datasets/test/DCM",
         "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/test/f1_best.pth",
         "save_csv_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/output.csv"
     },
@@ -121,5 +121,6 @@
             "args": [],
             "kwargs": {}
         }
-    ]
+    ],
+    "fine_tuning_mode": false
 }
