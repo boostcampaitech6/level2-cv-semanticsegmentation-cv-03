@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from segmentation_models_pytorch import losses
 
 
 class DiceBCELoss(nn.Module):
@@ -321,6 +322,18 @@ class ComboLoss(nn.Module):
         return combo
 
 
+class ComboLoss2(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(ComboLoss2, self).__init__()
+
+    def forward(self, outputs, masks):
+
+        bce = bce_with_logits_loss(outputs, masks)
+        dice = dice_loss(outputs, masks)
+
+        return bce * 0.5 + dice * 0.5
+
+
 def bce_with_logits_loss(outputs, masks):
     return nn.BCEWithLogitsLoss()(outputs, masks)
 
@@ -355,3 +368,39 @@ def lovasz_hinge_loss(outputs, masks):
 
 def combo_loss(outputs, masks):
     return ComboLoss()(outputs, masks)
+
+
+def combo_loss2(outputs, masks):
+    return ComboLoss2()(outputs, masks)
+
+
+def jaccard_loss(outputs, masks):
+    loss = losses.JaccardLoss(mode="multilabel")
+    return loss(outputs, masks)
+
+
+def smp_dice_loss(outputs, masks):
+    loss = losses.DiceLoss(mode="multilabel")
+    return loss(outputs, masks)
+
+
+def combo_loss3(outputs, masks):
+    return (
+        jaccard_loss(outputs, masks) * 0.5
+        + bce_with_logits_loss(outputs, masks) * 0.5
+    )
+
+
+def combo_loss4(outputs, masks):
+    return (
+        jaccard_loss(outputs, masks) * 0.4
+        + bce_with_logits_loss(outputs, masks) * 0.3
+        + smp_dice_loss(outputs, masks) * 0.3
+    )
+
+
+def combo_loss5(outputs, masks):
+    return (
+        jaccard_loss(outputs, masks) * 0.5
+        + smp_dice_loss(outputs, masks) * 0.5
+    )
