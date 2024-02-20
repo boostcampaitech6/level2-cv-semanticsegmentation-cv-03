@@ -51,7 +51,7 @@ def main():
             if type(df.iloc[i]['rle']) == float:
                 weighted_masks.append(np.zeros((height, width)))
                 continue
-            weighted_masks.append(rle_to_mask(df.iloc[i]['rle'], height, width))
+            weighted_masks.append(rle_to_mask(df.iloc[i]['rle'], height, width) * w)
         
         combined_mask = sum(weighted_masks)
 
