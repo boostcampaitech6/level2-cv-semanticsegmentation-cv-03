@@ -99,7 +99,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-c",
         "--config",
-        default="/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/config_ensemble.json",
+        default="/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/config_logit.json",
         type=str,
         help="config file path (default: None)",
     )
