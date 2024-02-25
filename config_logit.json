@@ -1,0 +1,40 @@
+{
+    "n_gpu": 1,
+    "arch": {
+        "type": "Unet2Plus",
+        "args": {
+            "encoder_name": "efficientnet-b7"
+        }
+    },
+    "test_dataset": {
+        "type": "TestDataset",
+        "args": {}
+    },
+    "test_data_loader": {
+        "type": "DataLoader",
+        "args":{
+            "batch_size": 1,
+            "shuffle": false,
+            "num_workers": 8,
+            "drop_last": false,
+            "pin_memory": true
+        }
+    },
+    "test_transforms": [
+        {
+            "name": "Resize",
+            "args": [1024, 1024],
+            "kwargs": {}
+        },
+        {
+            "name": "Normalize",
+            "args": [],
+            "kwargs": {}
+        }
+    ],
+    "path": {
+        "test_path": "/data/ephemeral/home/datasets/test/DCM",
+        "save_logit_root": "/data/ephemeral/home/datasets/logit_f1",
+        "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/fold_Unet2_efcb7_1/f1_best.pth"
+    }
+}
