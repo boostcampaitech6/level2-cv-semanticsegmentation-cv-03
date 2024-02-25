@@ -35,3 +35,34 @@ class TestDataset(Dataset):
         image = torch.from_numpy(image).float()
 
         return image, image_name
+
+
+class PseudoTestDataset(Dataset):
+    def __init__(
+        self,
+        image_paths,
+        transforms=None,
+    ):
+
+        self.image_paths = image_paths
+        self.transforms = (
+            A.Compose(transforms) if transforms is not None else None
+        )
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, item):
+        image_path = self.image_paths[item]
+        image = cv2.imread(image_path)
+
+        if self.transforms is not None:
+            inputs = {"image": image}
+            result = self.transforms(**inputs)
+
+            image = result["image"]
+
+        image = image.transpose(2, 0, 1)
+        image = torch.from_numpy(image).float()
+
+        return image, image_path
