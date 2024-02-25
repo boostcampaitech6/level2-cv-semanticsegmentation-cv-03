@@ -20,6 +20,24 @@ class Unet(BaseModel):
         return self.pretrained_model(x)
 
 
+class Unet2Plus(BaseModel):
+    def __init__(
+        self,
+        num_classes=29,
+        encoder_name="resnet34",
+        encoder_weights="imagenet",
+    ):
+        super().__init__()
+        self.pretrained_model = smp.UnetPlusPlus(
+            encoder_name=encoder_name,
+            encoder_weights=encoder_weights,
+            classes=num_classes,
+        )
+
+    def forward(self, x):
+        return self.pretrained_model(x)
+
+
 class Linknet(BaseModel):
     def __init__(
         self,
@@ -83,6 +101,24 @@ class PAN(BaseModel):
     ):
         super().__init__()
         self.pretrained_model = smp.PAN(
+            encoder_name=encoder_name,
+            encoder_weights=encoder_weights,
+            classes=num_classes,
+        )
+
+    def forward(self, x):
+        return self.pretrained_model(x)
+
+
+class DeepLabV3(BaseModel):
+    def __init__(
+        self,
+        num_classes=29,
+        encoder_name="resnet34",
+        encoder_weights="imagenet",
+    ):
+        super().__init__()
+        self.pretrained_model = smp.DeepLabV3(
             encoder_name=encoder_name,
             encoder_weights=encoder_weights,
             classes=num_classes,
