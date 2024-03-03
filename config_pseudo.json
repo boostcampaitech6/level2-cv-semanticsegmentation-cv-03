@@ -1,0 +1,130 @@
+{
+    "n_gpu": 1,
+    "arch": {
+        "type": "Unet2Plus",
+        "args": {
+            "encoder_name": "efficientnet-b7"
+        }
+    },
+    "train_dataset": {
+        "type": "MaskLoadDataset",
+        "args": {}
+    },
+    "valid_dataset": {
+        "type": "MaskLoadDataset",
+        "args": {}
+    },
+    "test_dataset": {
+        "type": "PseudoTestDataset",
+        "args": {}
+    },
+    "train_data_loader": {
+        "type": "DataLoader",
+        "args": {
+            "batch_size": 2,
+            "shuffle": true,
+            "num_workers": 8,
+            "drop_last": false,
+            "pin_memory": true
+        }
+    },
+    "valid_data_loader": {
+        "type": "DataLoader",
+        "args": {
+            "batch_size": 2,
+            "shuffle": false,
+            "num_workers": 8,
+            "drop_last": false,
+            "pin_memory": true
+        }
+    },
+    "test_data_loader": {
+        "type": "DataLoader",
+        "args": {
+            "batch_size": 1,
+            "shuffle": false,
+            "num_workers": 8,
+            "drop_last": false,
+            "pin_memory": true
+        }
+    },
+    "optimizer": {
+        "type": "AdamW",
+        "args": {
+            "lr": 1e-3,
+            "weight_decay": 1e-5
+        }
+    },
+    "loss": "combo_loss5",
+    "metrics": [
+        "dice_coef"
+    ],
+    "lr_scheduler": {
+        "type": "ReduceLROnPlateau",
+        "args": {
+            "mode": "max",
+            "factor": 0.1,
+            "patience": 5,
+            "threshold": 0.001,
+            "threshold_mode": "abs",
+            "min_lr": 0.0001
+        }
+    },
+    "trainer": {
+        "type": "FastTrainer",
+        "args": {},
+
+        "epochs": 100,
+
+        "save_dir": "saved/",
+        "save_period": 10,
+
+        "monitor": "max val_dice_coef",
+        "early_stop": 10
+    },
+    "threshold": {
+        "pred_thr": 0.5
+    },
+    "wandb": {
+        "project_name": "funfun-seg",
+        "entity": "gusdn00751",
+        "exp_name": "test"
+    },
+    "path": {
+        "train_root": "/data/ephemeral/home/datasets/train/DCM",
+        "mask_root": "/data/ephemeral/home/datasets/mask_bin",
+        "test_root": "/data/ephemeral/home/datasets/test/DCM",
+        "test_mask_root": "/data/ephemeral/home/datasets/test_mask_bin",
+        "inference_model_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/saved/rotate_Unet2Plus_efcb7_1/f1_best.pth",
+        "save_csv_path": "/data/ephemeral/home/level2-cv-semanticsegmentation-cv-03/result/rotate_Unet2_efcb7.csv"
+    },
+    "kfold": {
+        "n_splits": 5,
+        "n_iter": 1
+    },
+    "train_transforms": [
+        {
+            "name": "Resize",
+            "args": [1024, 1024],
+            "kwargs": {}
+        },
+        {
+            "name": "Normalize",
+            "args": [],
+            "kwargs": {}
+        }
+    ],
+    "test_transforms": [
+        {
+            "name": "Resize",
+            "args": [1024, 1024],
+            "kwargs": {}
+        },
+        {
+            "name": "Normalize",
+            "args": [],
+            "kwargs": {}
+        }
+    ],
+    "fine_tuning_mode": false
+}
