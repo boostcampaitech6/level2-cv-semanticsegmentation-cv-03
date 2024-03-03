@@ -43,6 +43,7 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 <img align="center" src="imgs/public_result.png" width="840" height="50">
 
 <br />
+
 - Private 리더보드 결과
 <img align="center" src="imgs/private_result.png" width="840" height="50">
 
@@ -67,7 +68,7 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 이 코드는 `부스트캠프 AI Tech`에서 제공하는 데이터셋으로 다음과 같은 구성을 따릅니다.
 - train: 학습에 사용하는 데이터셋
 - test: 평가에 사용하는 데이터셋
-- train_resolx2: 학습데이터를 Real-ESRGAN을 사용하여 2배 upscaling 후 다시 원본 사이즈로 만든 데이터셋
+- train_resolx2: 학습데이터를 Real-ESRGAN을 사용하여 upscaling 후 다시 원본 사이즈로 만든 데이터셋
 - train_mmap: numpy.memmap 기능을 활용한 이미지 파일 데이터셋
 - mask_bin: 데이터셋의 모든 mask 이미지를 bin으로 압축하여 저장한 데이터셋
 - image_dict.pickle : 데이터셋 사용에 필요한 정보를 담고 있는 pickle 파일
@@ -107,7 +108,7 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 ```
 
 #### 1) `EDA/`
-- grad_cam, visulize 관련을 구현되어 시각화 기능을 제공합니다.
+- grad_cam, visulize 등이 구현되어 시각화 기능을 제공합니다.
 #### 2) `Real-ESRGAN/`
 - Super Resolution을 진행한 라이브러리입니다.
 #### 3) `base/`
@@ -121,15 +122,15 @@ Bone Segmentation은 인공지능 분야에서 중요한 응용 분야 중 하�
 #### 7) `trainer/`
 - loss, metric, trainer가 구현되어 모델 학습, 검증, 테스트 과정을 관리하고 실행합니다.
 #### 8) `utils/`
-- mmap, bin, ensemble 등이 구현하여 학습에 필요한 파일 생성 및 유틸리티 함수를 제공합니다.
+- mmap, bin, ensemble 등이 구현되어 학습에 필요한 파일 생성 및 유틸리티 함수를 제공합니다.
 #### 9) `parse_config.py`
 - config.json을 내용을 파싱하여 파라미터를 연결합니다.
 #### 10) `config.json`
-- 학습에 관련된 파라미터를 설정하는 json 파일입니다.
+- 학습에 관련된 파라미터를 설정하는 파일입니다.
 #### 11) `train.py`
 - config.json의 내용을 기반으로 학습을 진행합니다.
 #### 12) `inference.py`
-- inference 결과를 rle형식으로 변환하여 csv를 저장합니다.
+- test 데이터에 대해서 inference를 진행하고 결과를 rle형식으로 변환하여 csv를 저장합니다.
 #### 13) `validation.py`
 - validation을 진행하여 dice 결과를 출력하고 rle형식으로 변환하여 csv를 저장합니다.
 
